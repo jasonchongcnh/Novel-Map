@@ -1,0 +1,779 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>上載影片</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Palette - Clean Light Theme */
+            --bg-deep: #f8fafc;
+            --panel-bg: rgba(255, 255, 255, 0.95);
+            --panel-border: #cbd5e1;
+            --panel-highlight: #ffffff;
+
+            --text-main: #0f172a;
+            --text-muted: #475569;
+
+            --accent-primary: #0ea5e9;
+            /* Sky Blue */
+            --accent-glow: rgba(14, 165, 233, 0.25);
+            --accent-secondary: #6366f1;
+            /* Indigo */
+
+            --shadow-lg: 0 20px 40px -8px rgba(100, 116, 139, 0.15);
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 8px;
+
+            --anim-speed: 0.3s;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: var(--text-main);
+            background: var(--bg-deep);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(14, 165, 233, 0.05), transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.05), transparent 40%);
+        }
+
+        /* --- Main Container --- */
+        .upload-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--panel-border);
+            box-shadow: var(--shadow-lg);
+            border-radius: var(--radius-lg);
+            animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            position: relative;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .title {
+            font-size: 32px;
+            /* Larger title */
+            font-weight: 800;
+            margin: 0 0 12px 0;
+            color: var(--text-main);
+            background: none;
+            -webkit-text-fill-color: initial;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            /* Larger subtitle */
+            color: var(--text-muted);
+        }
+
+        /* --- Form Elements --- */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .label {
+            display: block;
+            font-size: 13px;
+            /* Slightly larger label */
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.8);
+            font-family: inherit;
+            font-size: 14px;
+            color: var(--text-main);
+            outline: none;
+            transition: var(--anim-speed);
+        }
+
+        .text-input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        /* Video Drop Zone */
+        .drop-zone {
+            border: 2px dashed var(--panel-border);
+            border-radius: var(--radius-md);
+            padding: 40px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--anim-speed);
+            position: relative;
+            background: rgba(255, 255, 255, 0.5);
+            /* Light bg */
+            overflow: hidden;
+        }
+
+        .drop-zone:hover {
+            border-color: var(--accent-primary);
+            background: rgba(14, 165, 233, 0.05);
+        }
+
+        .drop-zone.has-video {
+            padding: 0;
+            border-style: solid;
+        }
+
+        .drop-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 12px;
+            color: var(--text-muted);
+            transition: var(--anim-speed);
+        }
+
+        .drop-zone:hover .drop-icon {
+            color: var(--accent-primary);
+            transform: scale(1.1);
+        }
+
+        .drop-text {
+            font-size: 15px;
+            /* Larger text */
+            color: var(--text-muted);
+        }
+
+        .drop-text span {
+            color: var(--accent-primary);
+            font-weight: 500;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        #videoPreview {
+            width: 100%;
+            display: none;
+            border-radius: var(--radius-md);
+        }
+
+        /* Location Card */
+        .location-card {
+            background: rgba(226, 232, 240, 0.5);
+            /* Light grey bg */
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .location-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .coords {
+            font-family: monospace;
+            font-size: 15px;
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .status-text {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .get-loc-btn {
+            background: white;
+            color: var(--accent-primary);
+            border: 1px solid var(--panel-border);
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--anim-speed);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .get-loc-btn:hover {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        .get-loc-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--anim-speed);
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.35);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Back Link */
+        .back-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--accent-primary);
+        }
+
+        /* Map Modal */
+        .modal-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            width: 90%;
+            max-width: 800px;
+            height: 80vh;
+            background: var(--bg-deep);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+        }
+
+        .modal-header {
+            padding: 16px 24px;
+            background: var(--panel-bg);
+            border-bottom: 1px solid var(--panel-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+        }
+
+        .modal-body {
+            flex: 1;
+            position: relative;
+        }
+
+        #pickerMap {
+            width: 100%;
+            height: 100%;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            background: var(--panel-bg);
+            border-top: 1px solid var(--panel-border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--panel-border);
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-cancel:hover {
+            color: #fff;
+            border-color: #fff;
+        }
+
+        .btn-confirm {
+            background: var(--accent-primary);
+            color: #000;
+            border: none;
+            padding: 8px 24px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-confirm:hover {
+            background: #7dd3fc;
+        }
+
+        /* Success Message Overlay */
+        .success-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.3s;
+            z-index: 10;
+        }
+
+        .success-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            color: #10b981;
+            margin-bottom: 16px;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0);
+            }
+
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .success-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #fff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="upload-container">
+        <div class="header">
+            <h1 class="title">上載定位影片</h1>
+            <p class="subtitle">分享您的視角與全息體驗</p>
+        </div>
+
+        <div class="form-group">
+            <label class="label">1. 選擇影片</label>
+            <div class="drop-zone" id="dropZone">
+                <input type="file" id="fileInput" accept="video/*">
+
+                <div id="uploadPlaceholder">
+                    <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <div class="drop-text">
+                        <span>點擊上傳</span> 或拖拽影片到此
+                    </div>
+                </div>
+
+                <video id="videoPreview" controls></video>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="label">2. 影片資訊 (選填)</label>
+            <input type="text" id="videoTitle" class="text-input" placeholder="輸入影片標題 (例如：澳門塔景觀)" style="margin-bottom: 10px;">
+            <input type="text" id="videoDesc" class="text-input" placeholder="輸入簡短描述 (例如：景區實時拍攝)">
+        </div>
+
+        <div class="form-group">
+            <label class="label">3. 實時定位</label>
+            <div class="location-card">
+                <div class="location-details">
+                    <span class="status-text" id="locStatus">未獲取位置</span>
+                    <span class="coords" id="locCoords">--.------, --.------</span>
+                </div>
+                <button class="get-loc-btn" id="getLocBtn">獲取位置</button>
+                <button class="get-loc-btn" id="openMapBtn" style="margin-left:8px;">選取地圖</button>
+            </div>
+        </div>
+
+        <button class="submit-btn" id="submitBtn">
+            <span id="btnText">提交影片</span>
+            <div class="spinner" id="btnSpinner"></div>
+        </button>
+
+        <a href="Holo-Map.html" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            返回全息地圖
+        </a>
+
+        <!-- Success Message -->
+        <div class="success-overlay" id="successOverlay">
+            <svg class="success-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <div class="success-text">上傳成功！</div>
+            <p style="color: var(--text-muted); font-size: 13px; margin-top: 8px;">即將自動返回地圖...</p>
+        </div>
+    </div>
+
+    <!-- Map Picker Modal -->
+    <div class="modal-overlay" id="mapModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">點擊地圖選擇位置</h3>
+                <button class="btn-cancel" style="border:none; padding:4px;" onclick="closeMapModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="pickerMap"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeMapModal()">取消</button>
+                <button class="btn-confirm" onclick="confirmMapLocation()">確認位置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script type="text/javascript"
+        src="https://webapi.amap.com/maps?v=1.4.15&key=996c573b1bc00e701430f714a229de65"></script>
+    <script>
+        // DOM Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        const videoPreview = document.getElementById('videoPreview');
+        const getLocBtn = document.getElementById('getLocBtn');
+        const openMapBtn = document.getElementById('openMapBtn');
+        const locStatus = document.getElementById('locStatus');
+        const locCoords = document.getElementById('locCoords');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const successOverlay = document.getElementById('successOverlay');
+        const mapModal = document.getElementById('mapModal');
+
+        // State
+        let videoFile = null;
+        let locationData = null;
+        let pickerMap = null;
+        let pickerMarker = null;
+        let pickedLocation = null;
+
+        // 1. Video Handlers
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--accent-primary)';
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--panel-border)';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--panel-border)';
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect();
+            }
+        });
+
+        function handleFileSelect() {
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                if (!file.type.startsWith('video/')) {
+                    alert('請選擇有效的影片檔案。');
+                    return;
+                }
+
+                videoFile = file;
+                const url = URL.createObjectURL(file);
+
+                // Show Preview
+                uploadPlaceholder.style.display = 'none';
+                videoPreview.src = url;
+                videoPreview.style.display = 'block';
+                dropZone.classList.add('has-video');
+            }
+        }
+
+        // 2. Location Handlers
+
+        // Check URL parameters for passed location
+        function checkUrlLocation() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const lat = urlParams.get('lat');
+            const lng = urlParams.get('lng');
+
+            if (lat && lng) {
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    updateMainLocation(lat, lng, "已獲取位置 (來自地圖)");
+                    getLocBtn.textContent = "重新獲取";
+                }
+            }
+        }
+
+        checkUrlLocation();
+
+        getLocBtn.addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                locStatus.textContent = "您的瀏覽器不支援地理定位";
+                return;
+            }
+
+            getLocBtn.textContent = "定位中...";
+            getLocBtn.disabled = true;
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    updateMainLocation(position.coords.latitude, position.coords.longitude, "已獲取位置");
+                    getLocBtn.textContent = "重新獲取";
+                    getLocBtn.disabled = false;
+                },
+                (error) => {
+                    locStatus.textContent = "無法獲取定位";
+                    locStatus.style.color = "#ef4444";
+                    getLocBtn.textContent = "重試";
+                    getLocBtn.disabled = false;
+                    console.error(error);
+                },
+                {
+                    enableHighAccuracy: true
+                }
+            );
+        });
+
+        // --- Map Modal Logic ---
+
+        openMapBtn.addEventListener('click', () => {
+            mapModal.classList.add('open');
+            if (!pickerMap) {
+                initPickerMap();
+            } else {
+                setTimeout(() => pickerMap.setFitView(), 200);
+            }
+        });
+
+        function closeMapModal() {
+            mapModal.classList.remove('open');
+        }
+
+        function initPickerMap() {
+            pickerMap = new AMap.Map("pickerMap", {
+                resizeEnable: true,
+                center: [113.541765, 22.186945], // Default Macau
+                zoom: 15,
+                mapStyle: 'amap://styles/normal',
+                pitch: 40,
+                viewMode: '3D'
+            });
+
+            pickerMap.on('click', function (e) {
+                pickedLocation = {
+                    lat: e.lnglat.getLat(),
+                    lng: e.lnglat.getLng()
+                };
+
+                if (pickerMarker) {
+                    pickerMarker.setPosition(e.lnglat);
+                } else {
+                    pickerMarker = new AMap.Marker({
+                        position: e.lnglat,
+                        map: pickerMap
+                    });
+                }
+            });
+        }
+
+        function confirmMapLocation() {
+            if (pickedLocation) {
+                updateMainLocation(pickedLocation.lat, pickedLocation.lng, "已獲取位置 (手動選取)");
+                closeMapModal();
+            } else {
+                alert("請在地圖上點擊選擇一個位置");
+            }
+        }
+
+        function updateMainLocation(lat, lng, statusText) {
+            locationData = { latitude: parseFloat(lat), longitude: parseFloat(lng) };
+
+            locStatus.textContent = statusText;
+            locStatus.style.color = "#10b981";
+            locCoords.innerText = `${parseFloat(lat).toFixed(6)}, ${parseFloat(lng).toFixed(6)}`;
+        }
+
+        // 3. Submit Handler
+        submitBtn.addEventListener('click', async () => {
+            if (!videoFile) {
+                alert('請先選擇影片檔案！');
+                return;
+            }
+            if (!locationData) {
+                const confirmLoc = confirm('未獲取位置資訊，是否要以預設位置 (澳門慈幼中學) 繼續提交？');
+                if (!confirmLoc) return;
+                locationData = { latitude: 22.186945, longitude: 113.541765 };
+            }
+
+            const title = document.getElementById('videoTitle').value.trim() || '全息定位影片';
+            const description = document.getElementById('videoDesc').value.trim();
+
+            btnText.textContent = '上傳中...';
+            btnSpinner.style.display = 'block';
+            submitBtn.disabled = true;
+
+            try {
+                await window.HoloMapAPI.uploadVideo({
+                    title,
+                    description,
+                    file: videoFile,
+                    lat: locationData.latitude,
+                    lng: locationData.longitude,
+                    onProgress: (percent) => {
+                        btnText.textContent = `上傳中 ${Math.round(percent)}%...`;
+                    }
+                });
+
+                successOverlay.classList.add('visible');
+
+                setTimeout(() => {
+                    window.location.href = 'Holo-Map.html';
+                }, 2000);
+            } catch (err) {
+                console.error("Upload error:", err);
+                alert('上傳失敗: ' + err.message);
+                btnText.textContent = '提交影片';
+                btnSpinner.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        });
+
+    </script>
+</body>
+
+</html>
