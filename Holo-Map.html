@@ -5,15 +5,110 @@
 <title>澳門全息地圖</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap');
 :root {
   --font-cn: "Noto Sans TC","Noto Sans SC","Microsoft JhengHei","Microsoft YaHei","PingFang TC","PingFang SC",sans-serif;
   --font-en: "Inter","Segoe UI","Helvetica Neue",Arial,sans-serif;
-  --font-en-size: 15px;
 }
-html,body,#container{height:100%;width:100%;margin:0}body{font-family:var(--font-cn);color:#0f172a;overflow:hidden}#container{background:#e2e8f0}.panel,.legend{position:absolute;z-index:1000;background:rgba(255,255,255,.95);border:1px solid #cbd5e1;border-radius:16px;box-shadow:0 12px 32px #64748b33;padding:20px}.panel{top:24px;left:24px;width:360px}.legend{top:24px;right:24px}.panel h1{margin:0 0 8px;font-size:26px}.panel p{color:#475569;line-height:1.5}.location{padding:12px;background:#f1f5f9;border-radius:10px;line-height:1.7}.action{display:block;text-align:center;margin-top:14px;padding:10px;border-radius:8px;background:#0ea5e9;color:#fff;text-decoration:none}.locate{box-sizing:border-box;display:block;width:100%;min-height:42px;margin-top:10px;padding:10px 14px;border:0;border-radius:8px;background:#334155;color:#fff;cursor:pointer;font-family:var(--font-cn);font-size:16px;font-weight:500;line-height:1.5;letter-spacing:0;text-align:center;white-space:nowrap}.lang-toggle{position:absolute;right:24px;top:155px;z-index:1001;padding:8px 12px;border:1px solid #cbd5e1;border-radius:999px;background:#fff;color:#0f172a;cursor:pointer;box-shadow:0 8px 24px #64748b22;font-family:var(--font-cn)}.legend div{margin:6px}.pin{width:24px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 5px #0006}.pin i{display:block;width:8px;height:8px;margin:6px;background:#020617;border-radius:50%}.user-pin{width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 5px #2563eb55,0 2px 6px #0008}.leaflet-popup-content{margin:0}.card{width:300px;overflow:hidden}.card h3{margin:0;padding:12px 16px;border-bottom:1px solid #e2e8f0}.card section{padding:12px 16px;color:#475569}.card img,.card video{max-width:100%;max-height:180px;border-radius:8px}.tag{font-size:11px;color:#0284c7}.en{font-family:var(--font-en);font-size:var(--font-en-size);font-weight:500}@media(max-width:600px){.panel{left:12px;right:12px;bottom:12px;top:auto;width:auto}.legend{top:12px;right:12px;padding:10px;font-size:12px}.lang-toggle{top:12px;left:12px;right:auto}}
+html,body,#container{height:100%;width:100%;margin:0}body{font-family:var(--font-cn);color:#0f172a;overflow:hidden}#container{background:#e2e8f0}.panel,.legend{position:absolute;z-index:1000;background:rgba(255,255,255,.95);border:1px solid #cbd5e1;border-radius:16px;box-shadow:0 12px 32px #64748b33;padding:20px}.panel{top:24px;left:24px;width:360px}.legend{top:24px;right:24px}.panel h1{margin:0 0 8px;font-size:26px}.panel p{color:#475569;line-height:1.5}.location{padding:12px;background:#f1f5f9;border-radius:10px;line-height:1.7}.action{display:block;text-align:center;margin-top:14px;padding:10px;border-radius:8px;background:#0ea5e9;color:#fff;text-decoration:none}.locate{box-sizing:border-box;display:block;width:100%;min-height:42px;margin-top:10px;padding:10px 14px;border:0;border-radius:8px;background:#334155;color:#fff;cursor:pointer;font-family:inherit;font-size:16px;font-weight:500;line-height:1.5;letter-spacing:0;text-align:center;white-space:nowrap}.lang-toggle{position:absolute;right:24px;top:155px;z-index:1001;padding:8px 12px;border:1px solid #cbd5e1;border-radius:999px;background:#fff;color:#0f172a;cursor:pointer;box-shadow:0 8px 24px #64748b22;font-family:var(--font-cn)}.legend div{margin:6px}.pin{width:24px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 5px #0006}.pin i{display:block;width:8px;height:8px;margin:6px;background:#020617;border-radius:50%}.user-pin{width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 5px #2563eb55,0 2px 6px #0008}.leaflet-popup-content{margin:0}.card{width:300px;overflow:hidden}.card h3{margin:0;padding:12px 16px;border-bottom:1px solid #e2e8f0}.card section{padding:12px 16px;color:#475569}.card img,.card video{max-width:100%;max-height:180px;border-radius:8px}.tag{font-size:11px;color:#0284c7}
+html[lang="en"] body,
+html[lang="en"] button,
+html[lang="en"] input,
+html[lang="en"] select,
+html[lang="en"] textarea,
+html[lang="en"] .locate,
+html[lang="en"] .lang-toggle,
+html[lang="en"] .action,
+html[lang="en"] .location,
+html[lang="en"] .panel,
+html[lang="en"] .legend,
+html[lang="en"] .card,
+html[lang="en"] .tag {
+  font-family: var(--font-en);
+}
+@media(max-width:600px){.panel{left:12px;right:12px;bottom:12px;top:auto;width:auto}.legend{top:12px;right:12px;padding:10px;font-size:12px}.lang-toggle{top:12px;left:12px;right:auto}}
 </style>
 </head>
-<body><div id="container"></div><button class="lang-toggle" id="langToggle" type="button">繁體 / <span class="en">Simplified</span></button><section class="panel"><h1 id="pageTitle">澳門全息地圖</h1><p id="pageSubtitle">基於高斯濺射與北斗衛星導航系統的新型全息地圖體驗</p><div class="location" id="result">正在獲取您的當前位置...</div><button class="locate" id="locateBtn" type="button">顯示當前位置</button><a class="action" id="uploadLink" href="Map-upload.html">+ 上載定位視頻</a></section><div class="legend"><div id="legendSchool">🔵 學校地標</div><div id="legendMuseum">🟡 博物館地標</div><div id="legendVideo">🟣 用戶上傳影片</div><div id="legendCurrent">🔷 當前位置</div></div>
+<body><div id="container"></div><button class="lang-toggle" id="langToggle" type="button">繁體 / 简体 / English</button><section class="panel"><h1 id="pageTitle">澳門全息地圖</h1><p id="pageSubtitle">基於高斯濺射與北斗衛星導航系統的新型全息地圖體驗</p><div class="location" id="result">正在獲取您的當前位置...</div><button class="locate" id="locateBtn" type="button">顯示當前位置</button><a class="action" id="uploadLink" href="Map-upload.html">+ 上載定位視頻</a></section><div class="legend"><div id="legendSchool">🔵 學校地標</div><div id="legendMuseum">🟡 博物館地標</div><div id="legendVideo">🟣 用戶上傳影片</div><div id="legendCurrent">🔷 當前位置</div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script><script>
-const translations={'zh-Hant':{pageTitle:'澳門全息地圖',pageSubtitle:'基於高斯濺射與北斗衛星導航系統的新型全息地圖體驗',resultWaiting:'正在獲取您的當前位置...',locateBtn:'顯示當前位置',uploadText:'+ 上載定位視頻',legendSchool:'🔵 學校地標',legendMuseum:'🟡 博物館地標',legendVideo:'🟣 用戶上傳影片',legendCurrent:'🔷 當前位置',success:'成功',statusLabel:'坐標：'},'zh-CN':{pageTitle:'澳门全息地图',pageSubtitle:'基于高斯散射与北斗卫星导航系统的新型全息地图体验',resultWaiting:'正在获取您当前的位置...',locateBtn:'显示当前位置',uploadText:'+ 上传定位视频',legendSchool:'🔵 学校地标',legendMuseum:'🟡 博物馆地标',legendVideo:'🟣 用户上传视频',legendCurrent:'🔷 当前位置',success:'成功',statusLabel:'坐标：'}};const state={lang:'zh-Hant'};function t(key){return translations[state.lang][key]||translations['zh-Hant'][key]||key}function applyLanguage(){['pageTitle','pageSubtitle','locateBtn','uploadText','legendSchool','legendMuseum','legendVideo','legendCurrent'].forEach(id=>{const el=document.getElementById(id==='pageTitle'?'pageTitle':id==='pageSubtitle'?'pageSubtitle':id==='locateBtn'?'locateBtn':id==='uploadText'?'uploadLink':id==='legendSchool'?'legendSchool':id==='legendMuseum'?'legendMuseum':id==='legendVideo'?'legendVideo':'legendCurrent');if(el){if(id==='uploadText'){el.textContent=t('uploadText')}else if(id==='locateBtn'){el.textContent=t('locateBtn')}else {el.textContent=t(id)}}});const result=document.getElementById('result');if(result && !result.dataset.hasLocation){result.textContent=t('resultWaiting')}document.documentElement.lang=state.lang;document.getElementById('langToggle').innerHTML=state.lang==='zh-Hant'?'繁體 / <span class="en">Simplified</span>':'简体 / <span class="en">Traditional</span>';};const center=[22.186945,113.541765],map=L.map('container').setView(center,16);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);function icon(color){return L.divIcon({className:'',html:'<div class="pin" style="background:'+color+'"><i></i></div>',iconSize:[28,36],iconAnchor:[14,34],popupAnchor:[0,-30]})}const icons={school:icon('#60a5fa'),museum:icon('#fbbf24'),video:icon('#a855f7')};function card(title,tag,image,address,phone,link,video,description){return '<div class="card"><h3>'+title+' <span class="tag">'+tag+'</span></h3><section>'+(video?'<video controls src="'+video+'"></video>':image?'<img src="'+image+'" alt="'+title+'">':'')+(description?'<p>'+description+'</p>':'')+(address?'<p>📍 '+address+'</p>':'')+(phone?'<p>☎️ '+phone+'</p>':'')+(link?'<p><a href="'+link+'" target="_blank">Website</a></p>':'')+'</section></div>'}function add(lat,lng,content,type){return L.marker([lat,lng],{icon:icons[type]}).addTo(map).bindPopup(content)}add(22.186945,113.541765,card('澳門大學','學校',null,'853 2857 3033','https://www.um.edu.mo'),'school');add(22.18336,113.562085,card('澳門科學館','博物館',null,'853 2888 0822','https://www.msc.org.mo/zh'),'museum');async function loadVideos(){try{const videos=await window.HoloMapAPI.fetchVideos();(videos||[]).forEach(v=>{if(v.lat==null||v.lng==null)return;add(Number(v.lat),Number(v.lng),card(v.title||'影片',v.status||'影片',null,null,null,v.video_url,v.description||''),'video')})}catch(e){console.error(e)}}let userMarker=null,userCircle=null;function showLocation(lat,lng,accuracy){const pos=[lat,lng];if(!userMarker){userMarker=L.marker(pos,{icon:L.divIcon({className:'',html:'<div class="user-pin"></div>',iconSize:[24,24],iconAnchor:[12,12],popupAnchor:[0,-12]})}).addTo(map).bindPopup('當前位置');}else userMarker.setLatLng(pos);if(accuracy){if(!userCircle){userCircle=L.circle(pos,{radius:accuracy,color:'#2563eb',fillColor:'#2563eb',fillOpacity:.12,weight:1}).addTo(map)}else{userCircle.setLatLng(pos).setRadius(accuracy)}}map.setView(pos,17);const result=document.getElementById('result');result.dataset.hasLocation='1';result.innerHTML='<b>成功</b><br>坐標： '+Number(lat).toFixed(6)+', '+Number(lng).toFixed(6)+(accuracy?'<br>準確度： '+Math.round(accuracy)+' m':'');document.getElementById('uploadLink').href='Map-upload.html?lat='+lat+'&lng='+lng;}function locate(){const result=document.getElementById('result');result.dataset.hasLocation='';result.textContent='正在獲取您的當前位置...';if(!navigator.geolocation){result.textContent='瀏覽器不支援地理位置功能';return}navigator.geolocation.getCurrentPosition(p=>showLocation(p.coords.latitude,p.coords.longitude,p.coords.accuracy),e=>{result.textContent='無法取得位置： '+e.message;},{enableHighAccuracy:true,timeout:15000,maximumAge:0})}document.getElementById('langToggle').onclick=()=>{state.lang=state.lang==='zh-Hant'?'zh-CN':'zh-Hant';applyLanguage();};document.getElementById('locateBtn').onclick=locate;document.getElementById('uploadLink').textContent='+ 上載定位視頻';applyLanguage();locate();loadVideos();</script></body></html>
+const translations = {
+  'zh-Hant': {
+    pageTitle: '澳門全息地圖',
+    pageSubtitle: '基於高斯濺射與北斗衛星導航系統的新型全息地圖體驗',
+    resultWaiting: '正在獲取您的當前位置...',
+    locateBtn: '顯示當前位置',
+    uploadText: '+ 上載定位視頻',
+    legendSchool: '🔵 學校地標',
+    legendMuseum: '🟡 博物館地標',
+    legendVideo: '🟣 用戶上傳影片',
+    legendCurrent: '🔷 當前位置',
+    success: '成功',
+    statusLabel: '坐標：',
+    noSupport: '瀏覽器不支援地理位置功能',
+    locationError: '無法取得位置：'
+  },
+  'zh-CN': {
+    pageTitle: '澳门全息地图',
+    pageSubtitle: '基于高斯散射与北斗卫星导航系统的新型全息地图体验',
+    resultWaiting: '正在获取您当前的位置...',
+    locateBtn: '显示当前位置',
+    uploadText: '+ 上传定位视频',
+    legendSchool: '🔵 学校地标',
+    legendMuseum: '🟡 博物馆地标',
+    legendVideo: '🟣 用户上传视频',
+    legendCurrent: '🔷 当前位置',
+    success: '成功',
+    statusLabel: '坐标：',
+    noSupport: '浏览器不支持地理位置功能',
+    locationError: '无法获取位置：'
+  },
+  en: {
+    pageTitle: 'Macau Holographic Map',
+    pageSubtitle: 'A new holographic map experience using Gaussian scattering and Beidou navigation',
+    resultWaiting: 'Getting your current location...',
+    locateBtn: 'Show Current Location',
+    uploadText: '+ Upload Location Video',
+    legendSchool: '🔵 School Landmarks',
+    legendMuseum: '🟡 Museum Landmarks',
+    legendVideo: '🟣 User Videos',
+    legendCurrent: '🔷 Current Location',
+    success: 'Success',
+    statusLabel: 'Coordinates:',
+    noSupport: 'Geolocation is not supported by this browser',
+    locationError: 'Unable to get location:'
+  }
+};
+
+const state = { lang: 'zh-Hant' };
+const langOrder = ['zh-Hant', 'zh-CN', 'en'];
+
+function t(key) {
+  return (translations[state.lang] && translations[state.lang][key]) || key;
+}
+
+function applyLanguage() {
+  document.documentElement.lang = state.lang;
+  const text = translations[state.lang];
+  document.getElementById('pageTitle').textContent = text.pageTitle;
+  document.getElementById('pageSubtitle').textContent = text.pageSubtitle;
+  document.getElementById('locateBtn').textContent = text.locateBtn;
+  document.getElementById('uploadLink').textContent = text.uploadText;
+  document.getElementById('legendSchool').textContent = text.legendSchool;
+  document.getElementById('legendMuseum').textContent = text.legendMuseum;
+  document.getElementById('legendVideo').textContent = text.legendVideo;
+  document.getElementById('legendCurrent').textContent = text.legendCurrent;
+  const result = document.getElementById('result');
+  if (result && !result.dataset.hasLocation) {
+    result.textContent = text.resultWaiting;
+  }
+  document.getElementById('langToggle').textContent = '繁體 / 简体 / English';
+}
+
+function updateLangToggle() {
+  const langToggle = document.getElementById('langToggle');
+  if (langToggle) {
+    langToggle.textContent = '繁體 / 简体 / English';
+  }
+}
+
+const center=[22.186945,113.541765],map=L.map('container').setView(center,16);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);function icon(color){return L.divIcon({className:'',html:'<div class="pin" style="background:'+color+'"><i></i></div>',iconSize:[28,36],iconAnchor:[14,34],popupAnchor:[0,-30]})}const icons={school:icon('#60a5fa'),museum:icon('#fbbf24'),video:icon('#a855f7')};function card(title,tag,image,address,phone,link,video,description){return '<div class="card"><h3>'+title+' <span class="tag">'+tag+'</span></h3><section>'+(video?'<video controls src="'+video+'"></video>':image?'<img src="'+image+'" alt="'+title+'">':'')+(description?'<p>'+description+'</p>':'')+(address?'<p>📍 '+address+'</p>':'')+(phone?'<p>☎️ '+phone+'</p>':'')+(link?'<p><a href="'+link+'" target="_blank">Website</a></p>':'')+'</section></div>'}function add(lat,lng,content,type){return L.marker([lat,lng],{icon:icons[type]}).addTo(map).bindPopup(content)}add(22.186945,113.541765,card('澳門大學','學校',null,'853 2857 3033','https://www.um.edu.mo'),'school');add(22.18336,113.562085,card('澳門科學館','博物館',null,'853 2888 0822','https://www.msc.org.mo/zh'),'museum');async function loadVideos(){try{const videos=await window.HoloMapAPI.fetchVideos();(videos||[]).forEach(v=>{if(v.lat==null||v.lng==null)return;add(Number(v.lat),Number(v.lng),card(v.title||'影片',v.status||'影片',null,null,null,v.video_url,v.description||''),'video')})}catch(e){console.error(e)}}let userMarker=null,userCircle=null;function showLocation(lat,lng,accuracy){const pos=[lat,lng];if(!userMarker){userMarker=L.marker(pos,{icon:L.divIcon({className:'',html:'<div class="user-pin"></div>',iconSize:[24,24],iconAnchor:[12,12],popupAnchor:[0,-12]})}).addTo(map).bindPopup('當前位置');}else userMarker.setLatLng(pos);if(accuracy){if(!userCircle){userCircle=L.circle(pos,{radius:accuracy,color:'#2563eb',fillColor:'#2563eb',fillOpacity:.12,weight:1}).addTo(map)}else{userCircle.setLatLng(pos).setRadius(accuracy)}}map.setView(pos,17);const result=document.getElementById('result');result.dataset.hasLocation='1';result.innerHTML='<b>'+t('success')+'</b><br>'+t('statusLabel')+' '+Number(lat).toFixed(6)+', '+Number(lng).toFixed(6)+(accuracy?'<br>準確度： '+Math.round(accuracy)+' m':'');document.getElementById('uploadLink').href='Map-upload.html?lat='+lat+'&lng='+lng;}function locate(){const result=document.getElementById('result');result.dataset.hasLocation='';result.textContent=t('resultWaiting');if(!navigator.geolocation){result.textContent=t('noSupport');return}navigator.geolocation.getCurrentPosition(p=>showLocation(p.coords.latitude,p.coords.longitude,p.coords.accuracy),e=>{result.textContent=t('locationError')+' '+e.message;},{enableHighAccuracy:true,timeout:15000,maximumAge:0})}document.getElementById('langToggle').onclick=()=>{const index=langOrder.indexOf(state.lang);state.lang=langOrder[(index+1)%langOrder.length];applyLanguage();};document.getElementById('locateBtn').onclick=locate;applyLanguage();updateLangToggle();locate();loadVideos();</script></body></html>
