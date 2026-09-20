@@ -51,9 +51,8 @@
     var style = document.createElement('style');
     style.id = 'novel-map-locale-typography';
     style.textContent = [
-      'html, body, button, input, select, textarea { font-family: Inter, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; }',
-      '#locateBtn, button.locate, button[id*="locate" i] { box-sizing: border-box; display: block; width: 100%; min-height: 42px; padding: 10px 14px; margin-top: 10px; border: 0; border-radius: 8px; font: inherit; font-size: 16px; font-weight: 500; line-height: 1.5; letter-spacing: 0; text-align: center; white-space: nowrap; }',
-      '#locateBtn { cursor: pointer; }'
+      'html, body, button, input, select, textarea { font-family: Inter, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif !important; }',
+      '#locateBtn, .locate, button.locate, button[id*="locate" i] { box-sizing: border-box; display: block; width: 100%; min-height: 42px; padding: 10px 14px; margin-top: 10px; border: 0; border-radius: 8px; background: #334155; color: #fff; cursor: pointer; font-family: inherit !important; font-size: 16px !important; font-weight: 500; line-height: 1.5; letter-spacing: 0; text-align: center; white-space: nowrap; }'
     ].join('\n');
     document.head.appendChild(style);
   }
