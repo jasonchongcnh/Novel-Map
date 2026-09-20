@@ -1,2 +1,180 @@
 <!doctype html>
-<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>影片審批後台</title><style>body{font-family:Inter,"PingFang SC","Microsoft YaHei",sans-serif;background:#f8fafc;margin:0;padding:24px;color:#0f172a}.box{max-width:1120px;margin:auto;background:#fff;padding:24px;border:1px solid #cbd5e1;border-radius:18px;box-shadow:0 12px 32px #64748b33}.nav{display:flex;gap:10px;justify-content:flex-end}button{padding:9px 14px;border:0;border-radius:8px;background:#0ea5e9;color:white;cursor:pointer}input{display:block;width:100%;box-sizing:border-box;padding:11px;margin:8px 0 14px;border:1px solid #cbd5e1;border-radius:8px}.panel{max-width:420px;margin:40px auto}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}.card{border:1px solid #cbd5e1;border-radius:12px;overflow:hidden}.card video{width:100%;background:#020617}.content{padding:14px}.actions{display:flex;gap:8px}.reject{background:#dc2626}.hidden{display:none}</style></head><body><main class="box"><div class="nav"><a href="Holo-Map.html">返回地圖</a><button id="out" class="hidden">登出</button></div><section id="login" class="panel"><h1>管理員登入</h1><form id="form"><input id="email" type="email" placeholder="Email" required><input id="password" type="password" placeholder="Password" required><button>登入</button></form></section><section id="review" class="hidden"><h1>待審批影片</h1><p id="status">載入中...</p><div id="grid" class="grid"></div></section></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script>const login=document.getElementById('login'),review=document.getElementById('review'),grid=document.getElementById('grid'),status=document.getElementById('status');function render(videos){grid.innerHTML='';status.textContent=`共 ${videos.length} 條待審批`;videos.forEach(v=>{const c=document.createElement('article');c.className='card';c.innerHTML='<video controls preload="metadata"></video><div class="content"><h3></h3><p></p><div class="actions"><button data-s="approved">通過</button><button class="reject" data-s="rejected">拒絕</button></div></div>';c.querySelector('video').src=v.video_url;c.querySelector('h3').textContent=v.title||'全息定位影片';c.querySelector('p').textContent=`${v.description||'沒有描述'} / ${Number(v.lat).toFixed(6)}, ${Number(v.lng).toFixed(6)}`;c.querySelectorAll('[data-s]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await window.HoloMapAPI.updateVideoStatus(v.id,b.dataset.s);c.remove()}catch(e){alert(e.message);b.disabled=false}});grid.appendChild(c)})}async function load(){try{const v=await window.HoloMapAPI.fetchPendingVideos();render(v)}catch(e){status.textContent='載入失敗: '+e.message}}document.getElementById('form').onsubmit=async e=>{e.preventDefault();try{await window.HoloMapAPI.signInAdmin(email.value,password.value);login.classList.add('hidden');review.classList.remove('hidden');out.classList.remove('hidden');load()}catch(x){alert('登入失敗: '+x.message)}};out.onclick=async()=>{await window.HoloMapAPI.signOutAdmin();location.reload()};(async()=>{if(await window.HoloMapAPI.getCurrentUser()){login.classList.add('hidden');review.classList.remove('hidden');out.classList.remove('hidden');load()}})();</script></body></html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>
+      影片審批後台
+    </title>
+    <style>
+    body{
+      font-family:Inter,"PingFang SC","Microsoft YaHei",sans-serif;
+      background:#f8fafc;
+      margin:0;
+      padding:24px;
+      color:#0f172a
+    }
+    .box{
+      max-width:1120px;
+      margin:auto;
+      background:#fff;
+      padding:24px;
+      border:1px solid #cbd5e1;
+      border-radius:18px;
+      box-shadow:0 12px 32px #64748b33
+    }
+    .nav{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end
+    }
+    button{
+      padding:9px 14px;
+      border:0;
+      border-radius:8px;
+      background:#0ea5e9;
+      color:white;
+      cursor:pointer
+    }
+    input{
+      display:block;
+      width:100%;
+      box-sizing:border-box;
+      padding:11px;
+      margin:8px 0 14px;
+      border:1px solid #cbd5e1;
+      border-radius:8px
+    }
+    .panel{
+      max-width:420px;
+      margin:40px auto
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      gap:16px
+    }
+    .card{
+      border:1px solid #cbd5e1;
+      border-radius:12px;
+      overflow:hidden
+    }
+    .card video{
+      width:100%;
+      background:#020617
+    }
+    .content{
+      padding:14px
+    }
+    .actions{
+      display:flex;
+      gap:8px
+    }
+    .reject{
+      background:#dc2626
+    }
+    .hidden{
+      display:none
+    }
+    </style>
+  </head>
+  <body>
+    <main class="box">
+      <div class="nav">
+        <a href="Holo-Map.html">
+          返回地圖
+        </a>
+        <button id="out" class="hidden">
+          登出
+        </button>
+      </div>
+      <section id="login" class="panel">
+        <h1>
+          管理員登入
+        </h1>
+        <form id="form">
+          <input id="email" type="email" placeholder="Email" required>
+          <input id="password" type="password" placeholder="Password" required>
+          <button>
+            登入
+          </button>
+        </form>
+      </section>
+      <section id="review" class="hidden">
+        <h1>
+          待審批影片
+        </h1>
+        <p id="status">
+          載入中...
+        </p>
+        <div id="grid" class="grid">
+        </div>
+      </section>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+    </script>
+    <script src="config.js">
+    </script>
+    <script>
+    const login=document.getElementById('login'),review=document.getElementById('review'),grid=document.getElementById('grid'),status=document.getElementById('status');
+    function render(videos){
+      grid.innerHTML='';
+      status.textContent=`共 ${videos.length} 條待審批`;
+      videos.forEach(v=>{
+        const c=document.createElement('article');
+        c.className='card';
+        c.innerHTML='<video controls preload="metadata"></video><div class="content"><h3></h3><p></p><div class="actions"><button data-s="approved">通過</button><button class="reject" data-s="rejected">拒絕</button></div></div>';
+        c.querySelector('video').src=v.video_url;
+        c.querySelector('h3').textContent=v.title||'全息定位影片';
+        c.querySelector('p').textContent=`${v.description||'沒有描述'} / ${Number(v.lat).toFixed(6)}, ${Number(v.lng).toFixed(6)}`;
+        c.querySelectorAll('[data-s]').forEach(b=>b.onclick=async()=>{
+          b.disabled=true;
+          try{
+            await window.HoloMapAPI.updateVideoStatus(v.id,b.dataset.s);
+            c.remove()
+          }
+          catch(e){
+            alert(e.message);
+            b.disabled=false
+          }
+        });
+        grid.appendChild(c)
+      })
+    }
+    async function load(){
+      try{
+        const v=await window.HoloMapAPI.fetchPendingVideos();
+        render(v)
+      }
+      catch(e){
+        status.textContent='載入失敗: '+e.message
+      }
+    }
+    document.getElementById('form').onsubmit=async e=>{
+      e.preventDefault();
+      try{
+        await window.HoloMapAPI.signInAdmin(email.value,password.value);
+        login.classList.add('hidden');
+        review.classList.remove('hidden');
+        out.classList.remove('hidden');
+        load()
+      }
+      catch(x){
+        alert('登入失敗: '+x.message)
+      }
+    };
+    out.onclick=async()=>{
+      await window.HoloMapAPI.signOutAdmin();
+      location.reload()
+    };
+    (async()=>{
+      if(await window.HoloMapAPI.getCurrentUser()){
+        login.classList.add('hidden');
+        review.classList.remove('hidden');
+        out.classList.remove('hidden');
+        load()
+      }
+    })();
+    </script>
+  </body>
+</html>
