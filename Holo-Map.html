@@ -6,33 +6,24 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
     <title>基於高斯濺射與北斗衛星導航系統的新型全息地圖</title>
-    <!-- AMap CSS remains for map basics -->
-    <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Palette - Clean Light Theme */
             --bg-deep: #f8fafc;
             --panel-bg: rgba(255, 255, 255, 0.95);
             --panel-border: #cbd5e1;
             --panel-highlight: #ffffff;
-
             --text-main: #0f172a;
             --text-muted: #475569;
-
             --accent-primary: #0ea5e9;
-            /* Sky Blue */
             --accent-glow: rgba(14, 165, 233, 0.25);
-
             --accent-secondary: #6366f1;
-            /* Indigo */
-
             --shadow-lg: 0 20px 40px -8px rgba(100, 116, 139, 0.15);
             --radius-lg: 24px;
             --radius-md: 16px;
-
             --anim-speed: 0.3s;
         }
 
@@ -53,13 +44,11 @@
             overflow: hidden;
         }
 
-        /* Map Filter reset for Light Mode */
         #container {
             filter: none;
             background: var(--bg-deep);
         }
 
-        /* --- Ambient Overlay (Subtle Warmth) --- */
         .map-overlay {
             position: absolute;
             inset: 0;
@@ -70,25 +59,19 @@
             z-index: 10;
         }
 
-        /* --- Glass Panel (Main UI) --- */
         .glass-panel {
             position: absolute;
             top: 24px;
             left: 24px;
             width: 420px;
-            /* Wider for larger text */
             max-width: calc(100vw - 48px);
             padding: 32px;
-            /* More padding */
             border-radius: var(--radius-lg);
-
             background: var(--panel-bg);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-
             border: 1px solid var(--panel-border);
             box-shadow: var(--shadow-lg);
-
             z-index: 100;
             animation: slideInLeft 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
             opacity: 0;
@@ -111,11 +94,9 @@
 
         .panel-title {
             font-size: 28px;
-            /* Larger Title */
             font-weight: 800;
             letter-spacing: -0.03em;
             color: var(--text-main);
-            /* Solid dark color */
             margin: 0;
         }
 
@@ -128,7 +109,6 @@
             border: 1px solid rgba(14, 165, 233, 0.2);
             border-radius: 20px;
             font-size: 13px;
-            /* Larger badge text */
             font-weight: 600;
             color: var(--accent-primary);
         }
@@ -147,13 +127,11 @@
                 transform: scale(0.95);
                 opacity: 0.8;
             }
-
             50% {
                 transform: scale(1.4);
                 opacity: 0.4;
                 box-shadow: 0 0 12px var(--accent-primary);
             }
-
             100% {
                 transform: scale(0.95);
                 opacity: 0.8;
@@ -162,7 +140,6 @@
 
         .panel-subtitle {
             font-size: 15px;
-            /* Larger subtitle */
             color: var(--text-muted);
             line-height: 1.6;
             margin: 0 0 24px 0;
@@ -188,17 +165,14 @@
 
         .location-info {
             font-size: 15px;
-            /* Larger location text */
             line-height: 1.6;
             color: var(--text-main);
             background: rgba(226, 232, 240, 0.5);
-            /* Light grey background */
             padding: 16px;
             border-radius: var(--radius-md);
             border: 1px solid var(--panel-border);
         }
 
-        /* --- Legend --- */
         .map-legend {
             position: absolute;
             top: 24px;
@@ -260,92 +234,38 @@
             box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
         }
 
-        /* --- Custom Info Window (Replaces Default) --- */
-        .amap-info-window {
-            overflow: visible !important;
+        .leaflet-container {
+            background: #dfeaf5;
         }
 
-        .custom-info-card {
-            width: 340px;
-            background: #ffffff;
-            border-radius: 16px;
-            box-shadow:
-                0 0 0 1px rgba(148, 163, 184, 0.2),
-                0 20px 40px rgba(0, 0, 0, 0.4);
-            overflow: hidden;
-            position: relative;
+        .leaflet-popup-content-wrapper,
+        .leaflet-popup-tip {
+            border-radius: 14px;
+        }
+
+        .custom-popup {
+            min-width: 230px;
+            max-width: 320px;
             color: var(--text-main);
-            font-family: inherit;
         }
 
-        .custom-info-arrow {
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
-            transform: translateX(-50%) rotate(45deg);
-            width: 16px;
-            height: 16px;
-            background: #ffffff;
-            border-right: 1px solid rgba(148, 163, 184, 0.2);
-            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-            z-index: 0;
-        }
-
-        .card-header {
-            padding: 16px 20px 12px;
+        .custom-pin {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-            background: linear-gradient(to bottom, rgba(56, 189, 248, 0.05), transparent);
-        }
-
-        .card-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin: 0;
-            color: var(--text-main);
-        }
-
-        .card-tag {
+            align-items: center;
+            justify-content: center;
             font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: 8px;
-            vertical-align: middle;
-            background: rgba(148, 163, 184, 0.2);
-            color: var(--text-muted);
-            font-weight: 600;
+            font-weight: 700;
+            color: white;
         }
 
-        .close-btn {
-            cursor: pointer;
-            opacity: 0.6;
-            transition: 0.2s;
-            background: none;
-            border: none;
-            padding: 4px;
-            display: flex;
-        }
-
-        .close-btn:hover {
-            opacity: 1;
-            transform: scale(1.1);
-        }
-
-        .close-btn svg {
-            width: 14px;
-            height: 14px;
-            stroke: currentColor;
-            stroke-width: 2.5;
-        }
-
-        .card-content {
-            padding: 16px 20px;
-            font-size: 14px;
-            line-height: 1.6;
-            color: var(--text-muted);
-        }
+        .custom-pin.school { background: #60a5fa; }
+        .custom-pin.museum { background: #fbbf24; }
+        .custom-pin.video { background: #a855f7; }
 
         .card-image {
             width: 100%;
@@ -355,20 +275,6 @@
             border-radius: 8px;
             margin-bottom: 12px;
             background: #020617;
-        }
-
-        .info-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 6px;
-        }
-
-        .info-row svg {
-            width: 16px;
-            height: 16px;
-            color: var(--accent-primary);
-            flex-shrink: 0;
-            margin-top: 2px;
         }
 
         .action-link {
@@ -422,12 +328,10 @@
                 max-width: none;
                 animation: slideInUp 0.6s forwards;
             }
-
             .map-legend {
                 top: 16px;
                 right: 16px;
             }
-
         }
 
         @keyframes slideInUp {
@@ -435,7 +339,6 @@
                 transform: translateY(20px);
                 opacity: 0;
             }
-
             to {
                 transform: translateY(0);
                 opacity: 1;
@@ -449,7 +352,6 @@
     <div id="container"></div>
     <div class="map-overlay"></div>
 
-    <!-- Main Status Panel -->
     <div class="glass-panel">
         <div class="panel-header">
             <h1 class="panel-title">澳門全息地圖</h1>
@@ -470,7 +372,6 @@
         </div>
     </div>
 
-    <!-- Legend -->
     <div class="map-legend">
         <div class="legend-item">
             <span class="legend-dot school"></span>
@@ -486,275 +387,141 @@
         </div>
     </div>
 
-    <!-- Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
-    <script type="text/javascript"
-        src="https://webapi.amap.com/maps?v=1.4.15&key=996c573b1bc00e701430f714a229de65"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="text/javascript">
-        // --- 1. Map Initialization ---
-        var map = new AMap.Map("container", {
-            resizeEnable: true,
-            center: [113.541765, 22.186945],
-            zoom: 16,
-            mapStyle: 'amap://styles/normal',
-            pitch: 50,
-            viewMode: '3D'
-        });
+        const map = L.map('container', {
+            zoomControl: true,
+            attributionControl: true
+        }).setView([22.186945, 113.541765], 16);
 
-        // --- 2. Custom Marker Icons (SVG) ---
-        function createPin(color) {
-            var svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="52" viewBox="0 0 40 52">
-            <defs>
-                <filter id="f1" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceGraphic" stdDeviation="4" />
-                </filter>
-            </defs>
-            <ellipse cx="20" cy="48" rx="12" ry="4" fill="${color}" opacity="0.4" filter="url(#f1)" />
-            <path d="M20 2C11.16 2 4 9.16 4 18c0 11 16 32 16 32s16-21 16-32c0-8.84-7.16-16-16-16z" fill="${color}"/>
-            <circle cx="20" cy="18" r="6" fill="#020617"/>
-        </svg>`;
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
 
-            return new AMap.Icon({
-                size: new AMap.Size(40, 52),
-                image: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg),
-                imageSize: new AMap.Size(40, 52)
+        function createPin(color, label = '') {
+            return L.divIcon({
+                className: 'custom-pin-wrap',
+                html: `<div class="custom-pin ${label === 'S' ? 'school' : label === 'M' ? 'museum' : 'video'}" style="background:${color};">${label}</div>`,
+                iconSize: [22, 22],
+                iconAnchor: [11, 11],
+                popupAnchor: [0, -12]
             });
         }
 
-        var schoolIcon = createPin('#60a5fa');
-        var museumIcon = createPin('#fbbf24');
-        var videoIcon = createPin('#a855f7');
+        function createPopupContent(title, tag, image, address, phone, link, videoUrl, description) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'custom-popup';
 
-        // --- 3. Custom InfoWindow Logic ---
-        function createInfoWindowContent(title, tag, image, address, phone, link, videoUrl, description) {
-            var content = document.createElement("div");
-            content.className = "custom-info-card";
+            let html = `
+                <div style="font-weight:700;font-size:18px;margin-bottom:4px;">${title}</div>
+                <div style="font-size:11px;color:#64748b;margin-bottom:8px;">${tag}</div>
+            `;
 
-            var tagColor = tag === '學校' ? '#60a5fa' : (tag === '博物館' ? '#fbbf24' : '#a855f7');
+            if (videoUrl) {
+                html += `<video controls src="${videoUrl}" style="width:100%;max-height:180px;border-radius:8px;margin-bottom:8px;background:#000"></video>`;
+            } else if (image) {
+                html += `<img src="${image}" class="card-image" alt="${title}" onerror="this.style.display='none'">`;
+            }
 
-            var html = `
-            <div class="card-header">
-                <div>
-                    <span class="card-title">${title}</span>
-                    <span class="card-tag" style="border-color:${tagColor}; color:${tagColor}">${tag}</span>
-                </div>
-                <button class="close-btn" onclick="closeInfoWindow()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-            </div>
-            <div class="card-content">
-                ${videoUrl ? `
-                <video controls src="${videoUrl}" class="card-image" style="background:#000; width:100%; border-radius:8px; margin-bottom:12px; max-height:220px;" preload="metadata"></video>
-                ` : (image ? `<img src="${image}" class="card-image" alt="${title}" onerror="this.style.display='none'">` : '')}
+            if (description) {
+                html += `<div style="font-size:12px;color:#475569;margin-bottom:8px;">${description}</div>`;
+            }
 
-                ${description ? `<p style="font-size:13px; color:var(--text-muted); margin:0 0 10px 0;">${description}</p>` : ''}
-                
-                ${address ? `
-                <div class="info-row">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                    <span>${address}</span>
-                </div>` : ''}
-                
-                ${phone ? `
-                <div class="info-row">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                    <span>${phone}</span>
-                </div>` : ''}
+            if (address) {
+                html += `<div style="font-size:12px;">📍 ${address}</div>`;
+            }
 
-                ${link ? `<a href="${link}" class="action-link" target="_blank">More Info &rarr;</a>` : ''}
-            </div>
-            <div class="custom-info-arrow"></div>
-        `;
-            content.innerHTML = html;
-            return content;
+            if (phone) {
+                html += `<div style="font-size:12px;">📞 ${phone}</div>`;
+            }
+
+            if (link) {
+                html += `<div style="margin-top:8px;"><a href="${link}" class="action-link" target="_blank">More Info →</a></div>`;
+            }
+
+            wrapper.innerHTML = html;
+            return wrapper;
         }
 
         window.closeInfoWindow = function () {
-            map.clearInfoWindow();
+            map.closePopup();
         };
 
-        // --- 4. Add Base Markers & Interactions ---
+        const schoolIcon = createPin('#60a5fa', 'S');
+        const museumIcon = createPin('#fbbf24', 'M');
+        const videoIcon = createPin('#a855f7', 'V');
 
-        // Marker 1: School
-        var marker1 = new AMap.Marker({
-            map: map,
-            position: [113.541765, 22.186945],
-            icon: schoolIcon,
-            offset: new AMap.Pixel(-20, -46)
-        });
+        const marker1 = L.marker([22.186945, 113.541765], { icon: schoolIcon }).addTo(map);
+        marker1.bindPopup(createPopupContent(
+            '澳門慈幼中學',
+            '學校',
+            './assets/img/IS_School_Macau.png',
+            '澳門風順堂街十六號',
+            '(853) 2857 3033',
+            'http://ism.edu.mo'
+        ));
 
-        var infoWindow1 = new AMap.InfoWindow({
-            isCustom: true,
-            content: createInfoWindowContent(
-                '澳門慈幼中學',
-                '學校',
-                './assets/img/IS_School_Macau.png',
-                '澳門風順堂街十六號',
-                '(853) 2857 3033',
-                'http://ism.edu.mo'
-            ),
-            offset: new AMap.Pixel(0, -50)
-        });
+        const marker2 = L.marker([22.18336, 113.562085], { icon: museumIcon }).addTo(map);
+        marker2.bindPopup(createPopupContent(
+            '澳門科學館',
+            '博物館',
+            './assets/img/MSC.jpg',
+            '澳門孫逸仙大馬路',
+            '(853) 2888 0822',
+            'https://www.msc.org.mo/zh'
+        ));
 
-        marker1.on('click', function () {
-            infoWindow1.open(map, marker1.getPosition());
-        });
-
-        // Marker 2: Museum
-        var marker2 = new AMap.Marker({
-            map: map,
-            position: [113.562085, 22.18336],
-            icon: museumIcon,
-            offset: new AMap.Pixel(-20, -46)
-        });
-
-        var infoWindow2 = new AMap.InfoWindow({
-            isCustom: true,
-            content: createInfoWindowContent(
-                '澳門科學館',
-                '博物館',
-                './assets/img/MSC.jpg',
-                '澳門孫逸仙大馬路',
-                '(853) 2888 0822',
-                'https://www.msc.org.mo/zh'
-            ),
-            offset: new AMap.Pixel(0, -50)
-        });
-
-        marker2.on('click', function () {
-            infoWindow2.open(map, marker2.getPosition());
-        });
-
-        // --- 5. Load User Uploaded Videos ---
         async function loadUploadedVideos() {
             try {
                 const videos = await window.HoloMapAPI.fetchVideos();
                 if (!videos || !videos.length) return;
 
-                videos.forEach(vid => {
+                videos.forEach((vid) => {
                     if (!vid.lat || !vid.lng) return;
 
-                    var marker = new AMap.Marker({
-                        map: map,
-                        position: [vid.lng, vid.lat],
-                        icon: videoIcon,
-                        offset: new AMap.Pixel(-20, -46)
-                    });
-
-                    const timeStr = vid.created_at ? new Date(vid.created_at).toLocaleDateString() : '';
-                    const infoWindow = new AMap.InfoWindow({
-                        isCustom: true,
-                        content: createInfoWindowContent(
-                            vid.title || '全息定位影片',
-                            '影音地標',
-                            null,
-                            `經緯度: ${parseFloat(vid.lat).toFixed(4)}, ${parseFloat(vid.lng).toFixed(4)} ${timeStr ? ' (' + timeStr + ')' : ''}`,
-                            null,
-                            null,
-                            vid.video_url,
-                            vid.description || ''
-                        ),
-                        offset: new AMap.Pixel(0, -50)
-                    });
-
-                    marker.on('click', function () {
-                        infoWindow.open(map, marker.getPosition());
-                    });
+                    const marker = L.marker([parseFloat(vid.lat), parseFloat(vid.lng)], { icon: videoIcon }).addTo(map);
+                    marker.bindPopup(createPopupContent(
+                        vid.title || '全息定位影片',
+                        '影音地標',
+                        null,
+                        `經緯度: ${parseFloat(vid.lat).toFixed(4)}, ${parseFloat(vid.lng).toFixed(4)}`,
+                        null,
+                        null,
+                        vid.video_url,
+                        vid.description || ''
+                    ));
                 });
             } catch (err) {
-                console.error("Failed to load uploaded map videos:", err);
+                console.error('Failed to load uploaded map videos:', err);
             }
         }
 
-        loadUploadedVideos();
-
-        // --- 6. Geolocation Logic ---
-        function convertGpsToAmap(lat, lng) {
-            return new Promise((resolve) => {
-                const fallback = {
-                    lat: parseFloat(lat),
-                    lng: parseFloat(lng)
-                };
-
-                if (typeof AMap === 'undefined' || !AMap.convertFrom) {
-                    resolve(fallback);
-                    return;
-                }
-
-                AMap.convertFrom([fallback.lng, fallback.lat], 'gps', (status, result) => {
-                    if (status === 'complete' && result.locations && result.locations.length) {
-                        const converted = result.locations[0];
-                        resolve({
-                            lat: converted.lat,
-                            lng: converted.lng
-                        });
-                    } else {
-                        resolve(fallback);
-                    }
-                });
-            });
-        }
-
         function updateUploadLink(lat, lng) {
-            var uploadLink = document.getElementById('uploadLink');
+            const uploadLink = document.getElementById('uploadLink');
             if (uploadLink) {
                 uploadLink.href = 'Map-upload.html?lat=' + lat + '&lng=' + lng;
             }
         }
 
-        function getPositionValues(position) {
-            return {
-                lat: parseFloat(typeof position.getLat === 'function' ? position.getLat() : position.lat),
-                lng: parseFloat(typeof position.getLng === 'function' ? position.getLng() : position.lng)
-            };
-        }
-
-        function showLocation(position, accuracy) {
-            document.getElementById('status').innerHTML = '定位成功';
-            document.getElementById('status').style.color = '#38bdf8';
-
-            var parsed = getPositionValues(position);
-            var lat = parsed.lat;
-            var lng = parsed.lng;
-            var str = [];
-            str.push('<span style="color:var(--accent-primary)">coords:</span> ' + lat.toFixed(6) + ',' + lng.toFixed(6));
-            if (accuracy) {
-                str.push('<span style="color:var(--accent-primary)">accuracy:</span> ' + Math.round(accuracy) + 'm');
+        function showLocation(lat, lng, accuracy) {
+            const status = document.getElementById('status');
+            const result = document.getElementById('result');
+            if (status) {
+                status.innerHTML = '定位成功';
+                status.style.color = '#38bdf8';
             }
-            document.getElementById('result').innerHTML = str.join('<br>');
-
-            updateUploadLink(lat, lng);
-        }
-
-        function locateWithBrowserFallback(errorData) {
-            if (!navigator.geolocation) {
-                onLocateError(errorData);
-                return;
-            }
-
-            document.getElementById('status').innerHTML = '定位中';
-            document.getElementById('result').innerHTML = '正在使用瀏覽器高精度定位重新嘗試...';
-
-            navigator.geolocation.getCurrentPosition(
-                async function (position) {
-                    var amapPosition = await convertGpsToAmap(
-                        position.coords.latitude,
-                        position.coords.longitude
-                    );
-                    showLocation(amapPosition, position.coords.accuracy);
-                    map.setCenter([amapPosition.lng, amapPosition.lat]);
-                    map.setZoom(17);
-                },
-                function (browserError) {
-                    onLocateError(browserError);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 15000,
-                    maximumAge: 0
+            if (result) {
+                const str = [];
+                str.push('<span style="color:var(--accent-primary)">coords:</span> ' + lat.toFixed(6) + ',' + lng.toFixed(6));
+                if (accuracy) {
+                    str.push('<span style="color:var(--accent-primary)">accuracy:</span> ' + Math.round(accuracy) + 'm');
                 }
-            );
+                result.innerHTML = str.join('<br>');
+            }
+            updateUploadLink(lat, lng);
         }
 
         function getBrowserGpsLocation() {
@@ -765,13 +532,10 @@
                 }
 
                 navigator.geolocation.getCurrentPosition(
-                    async function (position) {
-                        var amapPosition = await convertGpsToAmap(
-                            position.coords.latitude,
-                            position.coords.longitude
-                        );
+                    (position) => {
                         resolve({
-                            position: amapPosition,
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
                             accuracy: position.coords.accuracy
                         });
                     },
@@ -785,54 +549,45 @@
             });
         }
 
-        AMap.plugin('AMap.Geolocation', function () {
-            var geolocation = new AMap.Geolocation({
-                enableHighAccuracy: true,
-                timeout: 15000,
-                buttonPosition: 'RB',
-                buttonOffset: new AMap.Pixel(20, 80),
-                zoomToAccuracy: true,
-                convert: true
-            });
-            map.addControl(geolocation);
-
-            geolocation.getCurrentPosition(function (status, result) {
-                if (status == 'complete') {
-                    onLocateSuccess(result);
-                } else {
-                    locateWithBrowserFallback(result);
+        function locateUser() {
+            if (!navigator.geolocation) {
+                const result = document.getElementById('result');
+                if (result) {
+                    result.innerHTML = '無法獲取位置信息: 瀏覽器不支援地理定位';
                 }
-            });
-        });
-
-        function onLocateSuccess(data) {
-            if (data.position) {
-                if (!data.accuracy || data.accuracy > 100) {
-                    getBrowserGpsLocation()
-                        .then(function (browserData) {
-                            if (!data.accuracy || (browserData.accuracy && browserData.accuracy < data.accuracy)) {
-                                showLocation(browserData.position, browserData.accuracy);
-                                map.setCenter([browserData.position.lng, browserData.position.lat]);
-                                map.setZoom(17);
-                            } else {
-                                showLocation(data.position, data.accuracy);
-                            }
-                        })
-                        .catch(function () {
-                            showLocation(data.position, data.accuracy);
-                        });
-                } else {
-                    showLocation(data.position, data.accuracy);
-                }
+                return;
             }
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+                    showLocation(lat, lng, accuracy);
+                    map.setView([lat, lng], 17);
+                    L.marker([lat, lng]).addTo(map).bindPopup('目前位置');
+                },
+                (error) => {
+                    const result = document.getElementById('result');
+                    if (result) {
+                        result.innerHTML = '無法獲取位置信息: ' + (error.message || '未知錯誤');
+                    }
+                    const status = document.getElementById('status');
+                    if (status) {
+                        status.innerHTML = '定位失敗';
+                        status.style.color = '#ef4444';
+                    }
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                }
+            );
         }
 
-        function onLocateError(data) {
-            document.getElementById('status').innerHTML = '定位失敗';
-            document.getElementById('status').style.color = '#ef4444';
-            document.getElementById('result').innerHTML = '無法獲取位置信息: ' + (data.message || '未知錯誤');
-        }
-
+        loadUploadedVideos();
+        locateUser();
     </script>
 </body>
 
