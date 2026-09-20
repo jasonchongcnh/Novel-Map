@@ -1,24 +1,10 @@
 /**
- * Holographic Map Public Video Storage Configuration
+ * Holographic Map Video Storage Configuration
  * 
- * To make videos publicly available to ALL visitors across the internet:
+ * To make approved videos publicly available to ALL visitors across the internet:
  * 1. Create a free account at https://supabase.com and create a project.
  * 2. Set SUPABASE_URL and SUPABASE_ANON_KEY below.
- * 3. In your Supabase Dashboard SQL Editor, run:
- * 
- *    CREATE TABLE IF NOT EXISTS public_map_videos (
- *      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
- *      title TEXT NOT NULL,
- *      description TEXT,
- *      video_url TEXT NOT NULL,
- *      lat DOUBLE PRECISION NOT NULL,
- *      lng DOUBLE PRECISION NOT NULL,
- *      created_at TIMESTAMPTZ DEFAULT NOW()
- *    );
-
- *    ALTER TABLE public_map_videos ENABLE ROW LEVEL SECURITY;
- *    CREATE POLICY "Allow public read" ON public_map_videos FOR SELECT USING (true);
- *    CREATE POLICY "Allow public insert" ON public_map_videos FOR INSERT WITH CHECK (true);
+ * 3. In your Supabase Dashboard SQL Editor, run supabase-manual-approval.sql.
  * 
  * 4. Go to Storage -> Create bucket named 'videos' -> Set Public to TRUE.
  *    Add storage policies allowing public INSERT and SELECT.
@@ -86,6 +72,7 @@ async function getLocalVideos() {
 // Global API Helper
 window.HoloMapAPI = {
     isCloudEnabled: () => !!supabaseClient,
+    getClient: () => supabaseClient,
     
     uploadVideo: async function({ title, description, file, lat, lng, onProgress }) {
         const id = 'vid_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -120,7 +107,8 @@ window.HoloMapAPI = {
                     description: description || "",
                     video_url: videoUrl,
                     lat: parseFloat(lat),
-                    lng: parseFloat(lng)
+                    lng: parseFloat(lng),
+                    status: "pending"
                 }])
                 .select();
 
@@ -147,6 +135,7 @@ window.HoloMapAPI = {
                         lat: parseFloat(lat),
                         lng: parseFloat(lng),
                         created_at: createdAt,
+                        status: "approved",
                         is_local: true
                     };
                     await saveVideoLocally(videoRecord);
@@ -165,6 +154,7 @@ window.HoloMapAPI = {
                 const { data, error } = await supabaseClient
                     .from('public_map_videos')
                     .select('*')
+                    .eq('status', 'approved')
                     .order('created_at', { ascending: false });
                 if (!error && data) {
                     videos = data;
@@ -184,5 +174,78 @@ window.HoloMapAPI = {
             }
         }
         return videos;
+    },
+
+    getCurrentUser: async function() {
+        if (!supabaseClient) return null;
+        const { data, error } = await supabaseClient.auth.getUser();
+        if (error) return null;
+        return data.user;
+    },
+
+    signInAdmin: async function(email, password) {
+        if (!supabaseClient) {
+            throw new Error("Supabase is not configured.");
+        }
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email,
+            password
+        });
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        return data.user;
+    },
+
+    signOutAdmin: async function() {
+        if (!supabaseClient) return;
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) {
+            throw new Error(error.message);
+        }
+    },
+
+    fetchPendingVideos: async function() {
+        if (!supabaseClient) {
+            throw new Error("Supabase is not configured.");
+        }
+
+        const { data, error } = await supabaseClient
+            .from('public_map_videos')
+            .select('*')
+            .eq('status', 'pending')
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        return data || [];
+    },
+
+    updateVideoStatus: async function(id, status) {
+        if (!supabaseClient) {
+            throw new Error("Supabase is not configured.");
+        }
+
+        if (!["approved", "rejected"].includes(status)) {
+            throw new Error("Invalid approval status.");
+        }
+
+        const { data, error } = await supabaseClient
+            .from('public_map_videos')
+            .update({ status })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        return data;
     }
 };

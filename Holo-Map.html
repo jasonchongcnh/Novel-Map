@@ -389,6 +389,29 @@
             color: #000;
         }
 
+        .panel-action {
+            display: block;
+            margin-top: 15px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 8px;
+            background: rgba(56, 189, 248, 0.1);
+            color: #38bdf8;
+            text-align: center;
+            padding: 10px;
+            font: inherit;
+            font-weight: 600;
+            font-size: 13px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .panel-action:hover {
+            background: var(--accent-primary);
+            color: #fff;
+            border-color: var(--accent-primary);
+        }
+
         @media (max-width: 600px) {
             .glass-panel {
                 top: auto;
@@ -404,6 +427,7 @@
                 top: 16px;
                 right: 16px;
             }
+
         }
 
         @keyframes slideInUp {
@@ -442,12 +466,7 @@
                 正在嘗試獲取您的高精度位置信息...
             </div>
 
-            <a href="Map-upload.html" id="uploadLink" style="display: block; margin-top: 15px; text-decoration: none;">
-                <div
-                    style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; text-align: center; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; transition: 0.2s;">
-                    + 上載定位視頻
-                </div>
-            </a>
+            <a href="Map-upload.html" id="uploadLink" class="panel-action">+ 上載定位視頻</a>
         </div>
     </div>
 
@@ -651,13 +670,129 @@
         loadUploadedVideos();
 
         // --- 6. Geolocation Logic ---
+        function convertGpsToAmap(lat, lng) {
+            return new Promise((resolve) => {
+                const fallback = {
+                    lat: parseFloat(lat),
+                    lng: parseFloat(lng)
+                };
+
+                if (typeof AMap === 'undefined' || !AMap.convertFrom) {
+                    resolve(fallback);
+                    return;
+                }
+
+                AMap.convertFrom([fallback.lng, fallback.lat], 'gps', (status, result) => {
+                    if (status === 'complete' && result.locations && result.locations.length) {
+                        const converted = result.locations[0];
+                        resolve({
+                            lat: converted.lat,
+                            lng: converted.lng
+                        });
+                    } else {
+                        resolve(fallback);
+                    }
+                });
+            });
+        }
+
+        function updateUploadLink(lat, lng) {
+            var uploadLink = document.getElementById('uploadLink');
+            if (uploadLink) {
+                uploadLink.href = 'Map-upload.html?lat=' + lat + '&lng=' + lng;
+            }
+        }
+
+        function getPositionValues(position) {
+            return {
+                lat: parseFloat(typeof position.getLat === 'function' ? position.getLat() : position.lat),
+                lng: parseFloat(typeof position.getLng === 'function' ? position.getLng() : position.lng)
+            };
+        }
+
+        function showLocation(position, accuracy) {
+            document.getElementById('status').innerHTML = '定位成功';
+            document.getElementById('status').style.color = '#38bdf8';
+
+            var parsed = getPositionValues(position);
+            var lat = parsed.lat;
+            var lng = parsed.lng;
+            var str = [];
+            str.push('<span style="color:var(--accent-primary)">coords:</span> ' + lat.toFixed(6) + ',' + lng.toFixed(6));
+            if (accuracy) {
+                str.push('<span style="color:var(--accent-primary)">accuracy:</span> ' + Math.round(accuracy) + 'm');
+            }
+            document.getElementById('result').innerHTML = str.join('<br>');
+
+            updateUploadLink(lat, lng);
+        }
+
+        function locateWithBrowserFallback(errorData) {
+            if (!navigator.geolocation) {
+                onLocateError(errorData);
+                return;
+            }
+
+            document.getElementById('status').innerHTML = '定位中';
+            document.getElementById('result').innerHTML = '正在使用瀏覽器高精度定位重新嘗試...';
+
+            navigator.geolocation.getCurrentPosition(
+                async function (position) {
+                    var amapPosition = await convertGpsToAmap(
+                        position.coords.latitude,
+                        position.coords.longitude
+                    );
+                    showLocation(amapPosition, position.coords.accuracy);
+                    map.setCenter([amapPosition.lng, amapPosition.lat]);
+                    map.setZoom(17);
+                },
+                function (browserError) {
+                    onLocateError(browserError);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        function getBrowserGpsLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error('Browser geolocation is unavailable.'));
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                    async function (position) {
+                        var amapPosition = await convertGpsToAmap(
+                            position.coords.latitude,
+                            position.coords.longitude
+                        );
+                        resolve({
+                            position: amapPosition,
+                            accuracy: position.coords.accuracy
+                        });
+                    },
+                    reject,
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 15000,
+                        maximumAge: 0
+                    }
+                );
+            });
+        }
+
         AMap.plugin('AMap.Geolocation', function () {
             var geolocation = new AMap.Geolocation({
                 enableHighAccuracy: true,
-                timeout: 10000,
+                timeout: 15000,
                 buttonPosition: 'RB',
                 buttonOffset: new AMap.Pixel(20, 80),
-                zoomToAccuracy: true
+                zoomToAccuracy: true,
+                convert: true
             });
             map.addControl(geolocation);
 
@@ -665,25 +800,30 @@
                 if (status == 'complete') {
                     onLocateSuccess(result);
                 } else {
-                    onLocateError(result);
+                    locateWithBrowserFallback(result);
                 }
             });
         });
 
         function onLocateSuccess(data) {
-            document.getElementById('status').innerHTML = '定位成功';
-            document.getElementById('status').style.color = '#38bdf8';
-
-            var str = [];
-            str.push('<span style="color:var(--accent-primary)">coords:</span> ' + data.position);
-            if (data.accuracy) {
-                str.push('<span style="color:var(--accent-primary)">accuracy:</span> ' + data.accuracy + 'm');
-            }
-            document.getElementById('result').innerHTML = str.join('<br>');
-
-            var uploadLink = document.getElementById('uploadLink');
-            if (uploadLink && data.position) {
-                uploadLink.href = 'Map-upload.html?lat=' + data.position.lat + '&lng=' + data.position.lng;
+            if (data.position) {
+                if (!data.accuracy || data.accuracy > 100) {
+                    getBrowserGpsLocation()
+                        .then(function (browserData) {
+                            if (!data.accuracy || (browserData.accuracy && browserData.accuracy < data.accuracy)) {
+                                showLocation(browserData.position, browserData.accuracy);
+                                map.setCenter([browserData.position.lng, browserData.position.lat]);
+                                map.setZoom(17);
+                            } else {
+                                showLocation(data.position, data.accuracy);
+                            }
+                        })
+                        .catch(function () {
+                            showLocation(data.position, data.accuracy);
+                        });
+                } else {
+                    showLocation(data.position, data.accuracy);
+                }
             }
         }
 

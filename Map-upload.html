@@ -530,8 +530,8 @@
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
             </svg>
-            <div class="success-text">上傳成功！</div>
-            <p style="color: var(--text-muted); font-size: 13px; margin-top: 8px;">即將自動返回地圖...</p>
+            <div class="success-text">上傳成功，等待審批！</div>
+            <p style="color: var(--text-muted); font-size: 13px; margin-top: 8px;">審批通過後會顯示在地圖上，即將自動返回...</p>
         </div>
     </div>
 
@@ -641,33 +641,139 @@
 
         checkUrlLocation();
 
-        getLocBtn.addEventListener('click', () => {
-            if (!navigator.geolocation) {
-                locStatus.textContent = "您的瀏覽器不支援地理定位";
-                return;
-            }
+        function convertGpsToAmap(lat, lng) {
+            return new Promise((resolve) => {
+                const fallback = {
+                    lat: parseFloat(lat),
+                    lng: parseFloat(lng)
+                };
 
+                if (typeof AMap === 'undefined' || !AMap.convertFrom) {
+                    resolve(fallback);
+                    return;
+                }
+
+                AMap.convertFrom([fallback.lng, fallback.lat], 'gps', (status, result) => {
+                    if (status === 'complete' && result.locations && result.locations.length) {
+                        const converted = result.locations[0];
+                        resolve({
+                            lat: converted.lat,
+                            lng: converted.lng
+                        });
+                    } else {
+                        resolve(fallback);
+                    }
+                });
+            });
+        }
+
+        function setLocationButtonIdle() {
+            getLocBtn.textContent = "重新獲取";
+            getLocBtn.disabled = false;
+        }
+
+        function setLocationError(error) {
+            locStatus.textContent = "無法獲取定位";
+            locStatus.style.color = "#ef4444";
+            getLocBtn.textContent = "重試";
+            getLocBtn.disabled = false;
+            console.error(error);
+        }
+
+        function locateWithBrowserGps() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error("您的瀏覽器不支援地理定位"));
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        const amapLocation = await convertGpsToAmap(
+                            position.coords.latitude,
+                            position.coords.longitude
+                        );
+                        resolve({
+                            lat: amapLocation.lat,
+                            lng: amapLocation.lng,
+                            accuracy: position.coords.accuracy,
+                            source: "瀏覽器 GPS / 已轉換至高德座標"
+                        });
+                    },
+                    reject,
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 15000,
+                        maximumAge: 0
+                    }
+                );
+            });
+        }
+
+        function locateWithAmap() {
+            return new Promise((resolve, reject) => {
+                if (typeof AMap === 'undefined' || !AMap.plugin) {
+                    reject(new Error("高德定位尚未載入"));
+                    return;
+                }
+
+                AMap.plugin('AMap.Geolocation', () => {
+                    const geolocation = new AMap.Geolocation({
+                        enableHighAccuracy: true,
+                        timeout: 15000,
+                        convert: true,
+                        GeoLocationFirst: true,
+                        noIpLocate: 0,
+                        noGeoLocation: 0
+                    });
+
+                    geolocation.getCurrentPosition((status, result) => {
+                        if (status === "complete" && result.position) {
+                            resolve({
+                                lat: result.position.lat,
+                                lng: result.position.lng,
+                                accuracy: result.accuracy,
+                                source: "高德定位"
+                            });
+                        } else {
+                            reject(result || new Error("高德定位失敗"));
+                        }
+                    });
+                });
+            });
+        }
+
+        async function getBestCurrentLocation() {
             getLocBtn.textContent = "定位中...";
             getLocBtn.disabled = true;
 
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    updateMainLocation(position.coords.latitude, position.coords.longitude, "已獲取位置");
-                    getLocBtn.textContent = "重新獲取";
-                    getLocBtn.disabled = false;
-                },
-                (error) => {
-                    locStatus.textContent = "無法獲取定位";
-                    locStatus.style.color = "#ef4444";
-                    getLocBtn.textContent = "重試";
-                    getLocBtn.disabled = false;
-                    console.error(error);
-                },
-                {
-                    enableHighAccuracy: true
+            try {
+                let result;
+                try {
+                    result = await locateWithAmap();
+                    if (!result.accuracy || result.accuracy > 100) {
+                        const browserResult = await locateWithBrowserGps();
+                        if (!result.accuracy || (browserResult.accuracy && browserResult.accuracy < result.accuracy)) {
+                            result = browserResult;
+                        }
+                    }
+                } catch (amapError) {
+                    console.warn("AMap geolocation failed, falling back to browser GPS.", amapError);
+                    result = await locateWithBrowserGps();
                 }
-            );
-        });
+
+                const accuracy = result.accuracy
+                    ? `，精度約 ${Math.round(result.accuracy)}m`
+                    : "";
+
+                updateMainLocation(result.lat, result.lng, `已獲取位置 (${result.source})${accuracy}`);
+                setLocationButtonIdle();
+            } catch (error) {
+                setLocationError(error);
+            }
+        }
+
+        getLocBtn.addEventListener('click', getBestCurrentLocation);
 
         // --- Map Modal Logic ---
 
@@ -705,7 +811,15 @@
                 } else {
                     pickerMarker = new AMap.Marker({
                         position: e.lnglat,
-                        map: pickerMap
+                        map: pickerMap,
+                        draggable: true,
+                        cursor: 'move'
+                    });
+                    pickerMarker.on('dragend', function (event) {
+                        pickedLocation = {
+                            lat: event.lnglat.getLat(),
+                            lng: event.lnglat.getLng()
+                        };
                     });
                 }
             });
@@ -726,6 +840,33 @@
             locStatus.textContent = statusText;
             locStatus.style.color = "#10b981";
             locCoords.innerText = `${parseFloat(lat).toFixed(6)}, ${parseFloat(lng).toFixed(6)}`;
+
+            pickedLocation = {
+                lat: locationData.latitude,
+                lng: locationData.longitude
+            };
+
+            if (pickerMap) {
+                const lngLat = new AMap.LngLat(locationData.longitude, locationData.latitude);
+                pickerMap.setCenter(lngLat);
+                pickerMap.setZoom(17);
+                if (pickerMarker) {
+                    pickerMarker.setPosition(lngLat);
+                } else {
+                    pickerMarker = new AMap.Marker({
+                        position: lngLat,
+                        map: pickerMap,
+                        draggable: true,
+                        cursor: 'move'
+                    });
+                    pickerMarker.on('dragend', function (event) {
+                        pickedLocation = {
+                            lat: event.lnglat.getLat(),
+                            lng: event.lnglat.getLng()
+                        };
+                    });
+                }
+            }
         }
 
         // 3. Submit Handler
