@@ -46,6 +46,17 @@
     });
     root.childNodes.forEach(translateElement);
   }
+  function addTypographyFix() {
+    if (document.getElementById('novel-map-locale-typography')) return;
+    var style = document.createElement('style');
+    style.id = 'novel-map-locale-typography';
+    style.textContent = [
+      'html, body, button, input, select, textarea { font-family: Inter, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; }',
+      '#locateBtn, button.locate, button[id*="locate" i] { box-sizing: border-box; display: block; width: 100%; min-height: 42px; padding: 10px 14px; margin-top: 10px; border: 0; border-radius: 8px; font: inherit; font-size: 16px; font-weight: 500; line-height: 1.5; letter-spacing: 0; text-align: center; white-space: nowrap; }',
+      '#locateBtn { cursor: pointer; }'
+    ].join('\n');
+    document.head.appendChild(style);
+  }
   function addLanguageMenu() {
     var nav = document.querySelector('.nav');
     if (!nav || document.getElementById('language-switcher')) return;
@@ -63,12 +74,14 @@
   document.documentElement.lang = LOCALE;
   document.title = translate(document.title);
   translateElement(document.body);
+  addTypographyFix();
   addLanguageMenu();
   new MutationObserver(function (records) {
     records.forEach(function (record) {
       record.addedNodes.forEach(translateElement);
       if (record.type === 'characterData') translateElement(record.target);
     });
+    addTypographyFix();
     addLanguageMenu();
   }).observe(document.body, { childList: true, subtree: true, characterData: true });
 }());
