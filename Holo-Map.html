@@ -16,6 +16,10 @@
       color:#0f172a;
       overflow:hidden
     }
+    body.simplified-chinese-font,
+    body.simplified-chinese-font *{
+      font-family:Inter,"Microsoft YaHei",sans-serif
+    }
     #container{
       background:#e2e8f0
     }
@@ -249,6 +253,7 @@ const translations = {
 const state = { lang: 'zh-Hant' };
 function t(k) { return translations[state.lang][k]; }
 function applyLanguage() {
+  document.body.classList.toggle('simplified-chinese-font', state.lang === 'zh-Hans');
   document.getElementById('pageTitle').textContent = t('pageTitle');
   document.getElementById('pageSubtitle').textContent = t('pageSubtitle');
   document.getElementById('locateBtn').textContent = t('locateBtn');
