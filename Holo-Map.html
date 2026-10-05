@@ -42,7 +42,7 @@
       right:24px
     }
     .panel h1{
-      margin:0 0 8px;
+      margin:0 0 8px 36px;
       font-size:26px
     }
     .panel p{
@@ -76,6 +76,7 @@
       cursor:pointer
     }
     .lang-toggle{
+      display:none;
       padding:8px 12px;
       border:1px solid #cbd5e1;
       border-radius:999px;
@@ -84,6 +85,20 @@
       cursor:pointer;
       box-shadow:0 8px 24px #64748b22;
       font-family:inherit
+    }
+    .language-control.open .lang-toggle{
+      display:block
+    }
+    .language-label{
+      padding:8px 12px;
+      border:1px solid #cbd5e1;
+      border-radius:999px;
+      background:#fff;
+      color:#0f172a;
+      cursor:pointer;
+      box-shadow:0 8px 24px #64748b22;
+      font:inherit;
+      font-weight:600
     }
     .language-control{
       position:absolute;
@@ -178,7 +193,7 @@
   <body>
     <div id="container"></div>
     <div class="language-control">
-      <label class="language-label" id="languageLabel" for="langToggle">語言</label>
+      <button class="language-label" id="languageLabel" type="button" aria-expanded="false">語言</button>
       <select class="lang-toggle" id="langToggle" aria-label="語言">
         <option value="zh-Hant">繁體中文</option>
         <option value="zh-Hans">简体中文</option>
@@ -274,6 +289,8 @@ function t(k) { return translations[state.lang][k]; }
 function applyLanguage() {
   document.body.classList.toggle('simplified-chinese-font', state.lang === 'zh-Hans');
   document.getElementById('languageLabel').textContent = t('languageLabel');
+  document.getElementById('languageLabel').setAttribute('aria-expanded', 'false');
+  document.querySelector('.language-control').classList.remove('open');
   document.getElementById('langToggle').setAttribute('aria-label', t('languageLabel'));
   document.getElementById('pageTitle').textContent = t('pageTitle');
   document.getElementById('pageSubtitle').textContent = t('pageSubtitle');
@@ -301,6 +318,11 @@ document.getElementById('langToggle').addEventListener('change', (event) => {
       result.innerHTML = `<b>${t('success')}</b><br>${t('statusLabel')} ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
     }
   }
+});
+document.getElementById('languageLabel').addEventListener('click', () => {
+  const control = document.querySelector('.language-control');
+  const isOpen = control.classList.toggle('open');
+  document.getElementById('languageLabel').setAttribute('aria-expanded', String(isOpen));
 });
 const center=[22.186945,113.541765], map=L.map('container').setView(center,16);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
