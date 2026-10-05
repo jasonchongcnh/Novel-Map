@@ -76,10 +76,6 @@
       cursor:pointer
     }
     .lang-toggle{
-      position:absolute;
-      right:24px;
-      top:155px;
-      z-index:1001;
       padding:8px 12px;
       border:1px solid #cbd5e1;
       border-radius:999px;
@@ -88,6 +84,21 @@
       cursor:pointer;
       box-shadow:0 8px 24px #64748b22;
       font-family:inherit
+    }
+    .language-control{
+      position:absolute;
+      right:24px;
+      top:175px;
+      z-index:1001;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:6px
+    }
+    .language-label{
+      color:#0f172a;
+      font-size:16px;
+      font-weight:600
     }
     .legend div{
       margin:6px
@@ -155,22 +166,26 @@
         padding:10px;
         font-size:12px
       }
-      .lang-toggle{
-        top:12px;
+      .language-control{
+        top:54px;
         left:12px;
-        right:auto
+        right:auto;
+        align-items:flex-start
       }
     }
     </style>
   </head>
   <body>
     <div id="container"></div>
-    <select class="lang-toggle" id="langToggle" aria-label="語言">
-      <option value="zh-Hant">繁體中文</option>
-      <option value="zh-Hans">简体中文</option>
-      <option value="en">English</option>
-      <option value="pt">Português</option>
-    </select>
+    <div class="language-control">
+      <label class="language-label" id="languageLabel" for="langToggle">語言</label>
+      <select class="lang-toggle" id="langToggle" aria-label="語言">
+        <option value="zh-Hant">繁體中文</option>
+        <option value="zh-Hans">简体中文</option>
+        <option value="en">English</option>
+        <option value="pt">Português</option>
+      </select>
+    </div>
     <section class="panel">
       <h1 id="pageTitle">澳門全息地圖</h1>
       <p id="pageSubtitle">基於高斯濺射與北斗衛星導航系統的新型全息地圖體驗</p>
@@ -190,6 +205,7 @@
     <script>
 const translations = {
   'zh-Hant': {
+    languageLabel: '語言',
     pageTitle: '澳門全息地圖',
     pageSubtitle: '基於高斯濺射與北斗衛星導航系統的新型全息地圖體驗',
     resultWaiting: '正在獲取您的當前位置...',
@@ -205,6 +221,7 @@ const translations = {
     statusLabel: 'coords:'
   },
   'zh-Hans': {
+    languageLabel: '语言',
     pageTitle: '澳门全息地图',
     pageSubtitle: '基于高斯散射与北斗卫星导航系统的新型全息地图体验',
     resultWaiting: '正在获取您当前的位置...',
@@ -220,6 +237,7 @@ const translations = {
     statusLabel: 'coords:'
   },
   en: {
+    languageLabel: 'Language',
     pageTitle: 'Macau Holo Map',
     pageSubtitle: 'A next-generation holographic map experience based on Gaussian scattering and Beidou navigation',
     resultWaiting: 'Fetching your current location...',
@@ -235,6 +253,7 @@ const translations = {
     statusLabel: 'coords:'
   },
   pt: {
+    languageLabel: 'Idioma',
     pageTitle: 'Mapa Holográfico de Macau',
     pageSubtitle: 'Uma experiência de mapa holográfico de nova geração baseada na dispersão gaussiana e na navegação Beidou',
     resultWaiting: 'A obter a sua localização atual...',
@@ -254,6 +273,8 @@ const state = { lang: 'zh-Hant' };
 function t(k) { return translations[state.lang][k]; }
 function applyLanguage() {
   document.body.classList.toggle('simplified-chinese-font', state.lang === 'zh-Hans');
+  document.getElementById('languageLabel').textContent = t('languageLabel');
+  document.getElementById('langToggle').setAttribute('aria-label', t('languageLabel'));
   document.getElementById('pageTitle').textContent = t('pageTitle');
   document.getElementById('pageSubtitle').textContent = t('pageSubtitle');
   document.getElementById('locateBtn').textContent = t('locateBtn');
