@@ -290,7 +290,18 @@ const translations = {
   }
 };
 const state = { lang: 'zh-Hant' };
+const placeTitleTranslations = {
+  '澳門慈幼中學': { 'zh-Hant': '澳門慈幼中學', 'zh-Hans': '澳门慈幼中学', en: 'Macau Immaculate Conception College', pt: 'Colégio Imaculado Coração de Maria' },
+  '澳門科學館': { 'zh-Hant': '澳門科學館', 'zh-Hans': '澳门科学馆', en: 'Macau Science Center', pt: 'Centro de Ciência de Macau' },
+  '學校': { 'zh-Hant': '學校', 'zh-Hans': '学校', en: 'School', pt: 'Escola' },
+  '博物館': { 'zh-Hant': '博物館', 'zh-Hans': '博物馆', en: 'Museum', pt: 'Museu' }
+};
 function t(k) { return translations[state.lang][k]; }
+function translatePlaceCard(title, tag) {
+  const translatedTitle = (placeTitleTranslations[title] && placeTitleTranslations[title][state.lang]) || title;
+  const translatedTag = (placeTitleTranslations[tag] && placeTitleTranslations[tag][state.lang]) || tag;
+  return { title: translatedTitle, tag: translatedTag };
+}
 function applyLanguage() {
   document.body.classList.toggle('simplified-chinese-font', state.lang === 'zh-Hans');
   document.getElementById('languageLabel').textContent = t('languageLabel');
@@ -306,6 +317,12 @@ function applyLanguage() {
   document.getElementById('legendVideo').textContent = t('legendVideo');
   document.getElementById('legendCurrent').textContent = t('legendCurrent');
   document.getElementById('langToggle').value = state.lang;
+  if (window.landmarkMarkers) {
+    window.landmarkMarkers.forEach(function (item) {
+      const translated = translatePlaceCard(item.title, item.tag);
+      item.marker.setPopupContent(card(translated.title, translated.tag, item.image, item.address, item.phone, item.link, item.video, item.description));
+    });
+  }
   const result = document.getElementById('result');
   if (result && !result.dataset.hasLocation) {
     result.textContent = t('resultWaiting');
@@ -346,12 +363,35 @@ function card(title,tag,image,address,phone,link,video,description){
   return `<div class="card"><h3>${title} <span class="tag">${tag}</span></h3><section>${video?`<video controls src="${video}"></video>`:image?`<img src="${image}" alt="${title}">`:''}${description?`<p>${description}</p>`:''}${address?`<p>📍 ${address}</p>`:''}${phone?`<p>☎ ${phone}</p>`:''}${link?`<a href="${link}" target="_blank">更多資訊 →</a>`:''}</section></div>`
 }
 function add(lat,lng,content,type){
-  return L.marker([lat,lng],{
+  const marker = L.marker([lat,lng],{
     icon:icons[type]
-  }).addTo(map).bindPopup(content)
+  }).addTo(map).bindPopup(content);
+  return marker;
 }
-add(22.1895567,113.5371289,card('澳門慈幼中學','學校','./assets/img/IS_School_Macau.png','澳門風順堂街十六號','(853) 2857 3033','http://ism.edu.mo'),'school');
-add(22.186457, 113.556915,card('澳門科學館','博物館','./assets/img/MSC.jpg','澳門孫逸仙大馬路','(853) 2888 0822','https://www.msc.org.mo/zh'),'museum');
+window.landmarkMarkers = [
+  {
+    title: '澳門慈幼中學',
+    tag: '學校',
+    image: './assets/img/IS_School_Macau.png',
+    address: '澳門風順堂街十六號',
+    phone: '(853) 2857 3033',
+    link: 'http://ism.edu.mo',
+    video: null,
+    description: null,
+    marker: add(22.1895567,113.5371289,card('澳門慈幼中學','學校','./assets/img/IS_School_Macau.png','澳門風順堂街十六號','(853) 2857 3033','http://ism.edu.mo'),'school')
+  },
+  {
+    title: '澳門科學館',
+    tag: '博物館',
+    image: './assets/img/MSC.jpg',
+    address: '澳門孫逸仙大馬路',
+    phone: '(853) 2888 0822',
+    link: 'https://www.msc.org.mo/zh',
+    video: null,
+    description: null,
+    marker: add(22.186457, 113.556915,card('澳門科學館','博物館','./assets/img/MSC.jpg','澳門孫逸仙大馬路','(853) 2888 0822','https://www.msc.org.mo/zh'),'museum')
+  }
+];
 async function loadVideos(){
   try{
     const videos=await window.HoloMapAPI.fetchVideos();
