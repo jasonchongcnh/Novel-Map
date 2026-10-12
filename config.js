@@ -69,13 +69,22 @@ async function getLocalVideos() {
     }
 }
 
+function createUploadId() {
+    if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 // Global API Helper
 window.HoloMapAPI = {
     isCloudEnabled: () => !!supabaseClient,
     getClient: () => supabaseClient,
     
     uploadVideo: async function({ title, description, file, lat, lng, onProgress }) {
-        const id = 'vid_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        const id = createUploadId();
         const createdAt = new Date().toISOString();
 
         if (supabaseClient) {
@@ -86,7 +95,7 @@ window.HoloMapAPI = {
             const { data: uploadData, error: uploadError } = await supabaseClient
                 .storage
                 .from('videos')
-                .upload(filePath, file, { cacheControl: '3600', upsert: true });
+                .upload(filePath, file, { cacheControl: '3600', upsert: false });
 
             if (uploadError) {
                 throw new Error("Supabase Storage Error: " + uploadError.message);
@@ -100,23 +109,25 @@ window.HoloMapAPI = {
             const videoUrl = publicUrlData.publicUrl;
 
             // Insert Record into Database
-            const { data: dbData, error: dbError } = await supabaseClient
+            const videoRecord = {
+                id,
+                title: title || "全息定位影片",
+                description: description || "",
+                video_url: videoUrl,
+                lat: parseFloat(lat),
+                lng: parseFloat(lng),
+                status: "pending"
+            };
+            // Pending rows are hidden by RLS, so insert without requesting them back.
+            const { error: dbError } = await supabaseClient
                 .from('public_map_videos')
-                .insert([{
-                    title: title || "全息定位影片",
-                    description: description || "",
-                    video_url: videoUrl,
-                    lat: parseFloat(lat),
-                    lng: parseFloat(lng),
-                    status: "pending"
-                }])
-                .select();
+                .insert([videoRecord]);
 
             if (dbError) {
                 throw new Error("Supabase Database Error: " + dbError.message);
             }
 
-            return dbData[0];
+            return { ...videoRecord, created_at: createdAt };
         } else {
             // Fallback: Read file into Data URL and store in IndexedDB
             return new Promise((resolve, reject) => {
@@ -138,13 +149,34 @@ window.HoloMapAPI = {
                         status: "approved",
                         is_local: true
                     };
-                    await saveVideoLocally(videoRecord);
-                    resolve(videoRecord);
+                    try {
+                        await saveVideoLocally(videoRecord);
+                        resolve(videoRecord);
+                    } catch (error) {
+                        reject(error);
+                    }
                 };
                 reader.onerror = (err) => reject(err);
                 reader.readAsDataURL(file);
             });
         }
+    },
+
+    fetchUploadStatus: async function(uploadId) {
+        const id = String(uploadId || '').trim().toLowerCase();
+        if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) {
+            throw new Error("Invalid upload ID.");
+        }
+
+        const localVideo = (await getLocalVideos()).find(video => video.id === id);
+        if (localVideo) {
+            return { id, status: localVideo.status, created_at: localVideo.created_at, is_local: true };
+        }
+        if (!supabaseClient) throw new Error("Cloud status lookup is unavailable.");
+
+        const { data, error } = await supabaseClient.rpc('get_video_upload_status', { p_upload_id: id });
+        if (error) throw new Error(error.message);
+        return data && data.length ? data[0] : null;
     },
 
     fetchVideos: async function() {
