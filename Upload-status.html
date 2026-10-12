@@ -68,8 +68,7 @@
       <a id="uploadLink" href="Map-upload.html">Upload a new video</a>
     </nav>
   </main>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
+  <script src="config.js?v=upload-status-rest-1"></script>
   <script>
     const translations = {
   "zh-Hant": {
@@ -91,6 +90,7 @@
     "invalid": "\u8acb\u8f38\u5165\u5b8c\u6574\u6709\u6548\u7684\u4e0a\u50b3 ID\u3002",
     "notFound": "\u627e\u4e0d\u5230\u6b64\u4e0a\u50b3 ID\u3002\u8acb\u6aa2\u67e5 ID \u5f8c\u91cd\u8a66\u3002",
     "unavailable": "\u76ee\u524d\u7121\u6cd5\u67e5\u8a62\u72c0\u614b\uff0c\u8acb\u7a0d\u5f8c\u91cd\u8a66\u3002",
+    "connectionError": "\u7121\u6cd5\u9023\u7dda\u81f3\u72c0\u614b\u67e5\u8a62\u670d\u52d9\u3002\u8acb\u6aa2\u67e5\u7db2\u8def\u9023\u7dda\u5f8c\u91cd\u8a66\u3002",
     "language": "\u8a9e\u8a00"
   },
   "zh-Hans": {
@@ -112,6 +112,7 @@
     "invalid": "\u8bf7\u8f93\u5165\u5b8c\u6574\u6709\u6548\u7684\u4e0a\u4f20 ID\u3002",
     "notFound": "\u627e\u4e0d\u5230\u6b64\u4e0a\u4f20 ID\u3002\u8bf7\u68c0\u67e5 ID \u540e\u91cd\u8bd5\u3002",
     "unavailable": "\u76ee\u524d\u65e0\u6cd5\u67e5\u8be2\u72b6\u6001\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002",
+    "connectionError": "\u65e0\u6cd5\u8fde\u63a5\u72b6\u6001\u67e5\u8be2\u670d\u52a1\u3002\u8bf7\u68c0\u67e5\u7f51\u7edc\u8fde\u63a5\u540e\u91cd\u8bd5\u3002",
     "language": "\u8bed\u8a00"
   },
   "en": {
@@ -133,6 +134,7 @@
     "invalid": "Enter a complete, valid upload ID.",
     "notFound": "No upload was found with this ID. Check the ID and try again.",
     "unavailable": "Status is unavailable right now. Please try again later.",
+    "connectionError": "Could not connect to the status service. Check your connection and try again.",
     "language": "Language"
   },
   "pt": {
@@ -154,6 +156,7 @@
     "invalid": "Introduza um ID de envio completo e v\u00e1lido.",
     "notFound": "N\u00e3o foi encontrado nenhum envio com este ID. Verifique o ID e tente novamente.",
     "unavailable": "O estado n\u00e3o est\u00e1 dispon\u00edvel neste momento. Tente novamente mais tarde.",
+    "connectionError": "N\u00e3o foi poss\u00edvel ligar ao servi\u00e7o. Verifique a liga\u00e7\u00e3o e tente novamente.",
     "language": "Idioma"
   }
 };
@@ -225,7 +228,7 @@
         try { history.replaceState(null, '', '?lang=' + lang + '#id=' + id); } catch (error) {}
       } catch (error) {
         console.error('Upload status lookup failed:', error);
-        message = 'unavailable';
+        message = error.code === 'STATUS_CONNECTION_ERROR' ? 'connectionError' : 'unavailable';
       } finally {
         busy = false;
         button.disabled = false;

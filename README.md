@@ -28,3 +28,7 @@ Keep the upload ID or bookmark the link on the success receipt. Open `Upload-sta
 The status link carries the ID in its URL fragment (`#id=...`). Anyone with the ID can see the status and submission time, but the lookup does not return the video URL, title, description, or coordinates. The ID stays the same when an admin approves or rejects the upload.
 
 The browser remembers the most recently checked upload ID when local storage is available. Keep a separate copy for other devices or if browser data is cleared. Local previews stored in IndexedDB are labeled separately: they are not submitted for review and can only be checked in the same browser.
+
+The status page calls the public Supabase status endpoint directly, so it works without the external Supabase JavaScript library or an admin session. Cloud results are checked before local previews. Connection attempts time out after 15 seconds and can be retried.
+
+When publishing to GitHub Pages, deploy both `Upload-status.html` and `config.js` together. The status page versions its configuration script URL to avoid an older cached lookup implementation. If a status check works locally but is not found online, confirm the upload was saved to Supabase rather than only as a local preview.

@@ -12,10 +12,11 @@
 
 const SUPABASE_URL = "https://rzrsuvnmyxgapeufxfwg.supabase.co/"; 
 const SUPABASE_ANON_KEY = "sb_publishable_38oDVT8li0UWnWmmuamgTw_mcMr1niz";
+const isSupabaseConfigured = SUPABASE_URL !== "YOUR_SUPABASE_URL" && SUPABASE_ANON_KEY !== "YOUR_SUPABASE_ANON_KEY";
 
 // Initialize Supabase Client if configured
 let supabaseClient = null;
-if (typeof supabase !== 'undefined' && SUPABASE_URL !== "YOUR_SUPABASE_URL" && SUPABASE_ANON_KEY !== "YOUR_SUPABASE_ANON_KEY") {
+if (typeof supabase !== 'undefined' && isSupabaseConfigured) {
     try {
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } catch (e) {
@@ -168,15 +169,44 @@ window.HoloMapAPI = {
             throw new Error("Invalid upload ID.");
         }
 
+        // This public lookup must work without the SDK or a saved admin session.
+        if (isSupabaseConfigured) {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
+            try {
+                const response = await fetch(new URL('/rest/v1/rpc/get_video_upload_status', SUPABASE_URL), {
+                    method: 'POST',
+                    headers: {
+                        apikey: SUPABASE_ANON_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'omit',
+                    cache: 'no-store',
+                    body: JSON.stringify({ p_upload_id: id }),
+                    signal: controller.signal
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Cloud status lookup failed.');
+                if (!Array.isArray(data)) throw new Error('Invalid status lookup response.');
+                if (data.length) return data[0];
+            } catch (error) {
+                if (error.name === 'AbortError' || error.name === 'TypeError') {
+                    const connectionError = new Error('Could not connect to the upload status service.');
+                    connectionError.code = 'STATUS_CONNECTION_ERROR';
+                    throw connectionError;
+                }
+                throw error;
+            } finally {
+                clearTimeout(timeout);
+            }
+        }
+
         const localVideo = (await getLocalVideos()).find(video => video.id === id);
         if (localVideo) {
             return { id, status: localVideo.status, created_at: localVideo.created_at, is_local: true };
         }
-        if (!supabaseClient) throw new Error("Cloud status lookup is unavailable.");
-
-        const { data, error } = await supabaseClient.rpc('get_video_upload_status', { p_upload_id: id });
-        if (error) throw new Error(error.message);
-        return data && data.length ? data[0] : null;
+        if (!isSupabaseConfigured) throw new Error("Cloud status lookup is unavailable.");
+        return null;
     },
 
     fetchVideos: async function() {
