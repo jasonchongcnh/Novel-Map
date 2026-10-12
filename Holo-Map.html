@@ -257,7 +257,10 @@ const translations = {
     success: '已顯示當前位置',
     noSupport: '您的瀏覽器不支援地理定位',
     locateError: '無法獲取位置信息: ',
-    statusLabel: 'coords:'
+    statusLabel: 'coords:',
+    phoneLabel: '電話:',
+    moreInfo: '更多資訊',
+    likeAria: '點讚'
   },
   'zh-Hans': {
     languageLabel: '语言',
@@ -274,7 +277,10 @@ const translations = {
     success: '已显示当前位置',
     noSupport: '您的浏览器不支持地理定位',
     locateError: '无法获取位置信息: ',
-    statusLabel: 'coords:'
+    statusLabel: 'coords:',
+    phoneLabel: '电话:',
+    moreInfo: '更多资讯',
+    likeAria: '点赞'
   },
   en: {
     languageLabel: 'Language',
@@ -291,7 +297,10 @@ const translations = {
     success: 'Current location shown',
     noSupport: 'Your browser does not support geolocation',
     locateError: 'Unable to get location: ',
-    statusLabel: 'coords:'
+    statusLabel: 'coords:',
+    phoneLabel: 'Phone:',
+    moreInfo: 'More info',
+    likeAria: 'Like'
   },
   pt: {
     languageLabel: 'Idioma',
@@ -308,7 +317,10 @@ const translations = {
     success: 'Localização atual apresentada',
     noSupport: 'O seu navegador não suporta geolocalização',
     locateError: 'Não foi possível obter a localização: ',
-    statusLabel: 'Coordenadas:'
+    statusLabel: 'Coordenadas:',
+    phoneLabel: 'Telefone:',
+    moreInfo: 'Mais informações',
+    likeAria: 'Curtir'
   }
 };
 const requestedLanguage = new URLSearchParams(location.search).get('lang');
@@ -335,6 +347,16 @@ function applyLanguage() {
   if (result && !result.dataset.hasLocation) {
     result.textContent = t('resultWaiting');
   }
+
+  document.querySelectorAll('.leaflet-popup .phone-label').forEach(el => {
+    el.textContent = t('phoneLabel');
+  });
+  document.querySelectorAll('.leaflet-popup .more-info-link').forEach(el => {
+    el.textContent = t('moreInfo');
+  });
+  document.querySelectorAll('.leaflet-popup .like-btn').forEach(btn => {
+    btn.setAttribute('aria-label', t('likeAria'));
+  });
 }
 document.getElementById('langToggle').addEventListener('change', (event) => {
   state.lang = event.target.value;
@@ -371,9 +393,9 @@ function card(title,tag,image,address,phone,link,video,description){
   const likeKey = encodeURIComponent((title||'') + '|' + (tag||'') + '|' + (phone||''));
   const mediaHtml = video?`<video controls src="${video}"></video>`:image?`<img src="${image}" alt="${title}">`:'';
   const addressHtml = address?`<div class="info-row"><div>${address}</div></div>`:'';
-  const phoneHtml = phone?`<div class="info-row"><div>電話: <span class="phone">${phone}</span></div><button class="like-btn" data-like-key="${likeKey}" type="button" aria-label="點讚">👍 <span class="like-count">0</span></button></div>`:'';
+  const phoneHtml = phone?`<div class="info-row"><div><span class="phone-label">${t('phoneLabel')}</span> <span class="phone">${phone}</span></div><button class="like-btn" data-like-key="${likeKey}" type="button" aria-label="${t('likeAria')}">👍 <span class="like-count">0</span></button></div>`:'';
   const descHtml = description?`<p>${description}</p>`:'';
-  const linkHtml = link?`<p><a href="${link}" target="_blank" rel="noopener">更多資訊</a></p>`:'';
+  const linkHtml = link?`<p><a class="more-info-link" href="${link}" target="_blank" rel="noopener">${t('moreInfo')}</a></p>`:'';
   return `<div class="card"><h3>${title} <span class="tag">${tag}</span></h3><section>${mediaHtml}${addressHtml}${phoneHtml}${descHtml}${linkHtml}</section></div>`;
 }
 function add(lat,lng,content,type){
@@ -470,7 +492,14 @@ async function incrementLike(key){
 map.on('popupopen', async function(e){
   const popupEl = e.popup.getElement();
   if (!popupEl) return;
+  popupEl.querySelectorAll('.phone-label').forEach(el => {
+    el.textContent = t('phoneLabel');
+  });
+  popupEl.querySelectorAll('.more-info-link').forEach(el => {
+    el.textContent = t('moreInfo');
+  });
   popupEl.querySelectorAll('.like-btn').forEach(async (btn) => {
+    btn.setAttribute('aria-label', t('likeAria'));
     const key = btn.dataset.likeKey;
     const countSpan = btn.querySelector('.like-count');
     const currentCount = await fetchLikeCount(key);
