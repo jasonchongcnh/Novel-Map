@@ -69,6 +69,22 @@
     .content{
       padding:14px
     }
+    .upload-id{
+      margin:12px 0;
+      color:#475569
+    }
+    .upload-id dt{
+      font-size:14px
+    }
+    .upload-id dd{
+      margin:4px 0 0
+    }
+    .upload-id code{
+      font-size:13px;
+      line-height:1.5;
+      overflow-wrap:anywhere;
+      user-select:all
+    }
     .actions{
       display:flex;
       gap:8px
@@ -126,9 +142,10 @@
       videos.forEach(v=>{
         const c=document.createElement('article');
         c.className='card';
-        c.innerHTML='<video controls preload="metadata"></video><div class="content"><h3></h3><p></p><div class="actions"><button data-s="approved">通過</button><button class="reject" data-s="rejected">拒絕</button></div></div>';
+        c.innerHTML='<video controls preload="metadata"></video><div class="content"><h3></h3><dl class="upload-id"><dt>上傳 ID</dt><dd><code></code></dd></dl><p></p><div class="actions"><button data-s="approved">通過</button><button class="reject" data-s="rejected">拒絕</button></div></div>';
         c.querySelector('video').src=v.video_url;
         c.querySelector('h3').textContent=v.title||'全息定位影片';
+        c.querySelector('.upload-id code').textContent=v.id;
         c.querySelector('p').textContent=`${v.description||'沒有描述'} / ${Number(v.lat).toFixed(6)}, ${Number(v.lng).toFixed(6)}`;
         c.querySelectorAll('[data-s]').forEach(b=>b.onclick=async()=>{
           b.disabled=true;

@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <title>Check upload status</title>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:Inter,"PingFang SC","Microsoft YaHei",sans-serif;background:#f8fafc;margin:0;padding:24px;color:#0f172a}
+    main{max-width:616px;margin:auto;padding:28px;background:#fff;border:1px solid #cbd5e1;border-radius:8px}
+    header{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;margin-bottom:28px}
+    h1{font-size:24px;line-height:1.3;margin:0}
+    select,input,button{font:inherit}
+    select{padding:8px;border:1px solid #cbd5e1;background:#fff;border-radius:8px;min-height:44px}
+    label{display:block;font-weight:700;color:#475569;margin-bottom:8px}
+    input{display:block;width:100%;padding:12px;border:1px solid #94a3b8;border-radius:8px;font-family:monospace;font-size:16px}
+    button{display:block;width:100%;margin-top:14px;padding:12px;border:0;border-radius:8px;background:#0284c7;color:#fff;cursor:pointer;min-height:44px;font-weight:600}
+    button:disabled{opacity:.65;cursor:wait}
+    :focus-visible{outline:3px solid #38bdf8;outline-offset:3px}
+    [hidden]{display:none!important}
+    .result{margin-top:24px;padding:22px 0;border-top:1px solid #cbd5e1;border-bottom:1px solid #cbd5e1}
+    .result h2{font-size:20px;line-height:1.4;margin:0}
+    .result p{line-height:1.5;color:#475569;margin:10px 0 0}
+    .result[data-status="pending"] h2{color:#a16207}
+    .result[data-status="approved"] h2{color:#15803d}
+    .result[data-status="rejected"] h2,.result[data-status="error"] h2{color:#b91c1c}
+    dl{margin:18px 0 0}
+    dt{font-size:14px;color:#475569}
+    dd{margin:6px 0 0;line-height:1.5}
+    nav{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:24px}
+    a{color:#0284c7;line-height:1.5;padding:8px 0}
+    @media(max-width:480px){
+      body{padding:12px}
+      main{padding:20px}
+      header{flex-direction:column-reverse;margin-bottom:24px}
+      select{align-self:flex-end}
+      input{font-size:14px}
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1 id="pageTitle">Check upload status</h1>
+      <select id="langSelect" aria-label="Language">
+        <option value="zh-Hant">&#32321;&#39636;</option>
+        <option value="zh-Hans">&#31616;&#20307;</option>
+        <option value="en">EN</option>
+        <option value="pt">PT</option>
+      </select>
+    </header>
+    <form id="statusForm">
+      <label id="labelId" for="uploadId">Upload ID</label>
+      <input id="uploadId" name="uploadId" type="text" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" aria-describedby="resultTitle">
+      <button id="check" type="submit">Check status</button>
+    </form>
+    <section id="result" class="result" role="status" aria-live="polite" hidden>
+      <h2 id="resultTitle"></h2>
+      <p id="resultNote"></p>
+      <dl id="submitted" hidden>
+        <dt id="submittedLabel">Submitted</dt>
+        <dd id="submittedTime"></dd>
+      </dl>
+    </section>
+    <nav>
+      <a id="backLink" href="Holo-Map.html">Back to map</a>
+      <a id="uploadLink" href="Map-upload.html">Upload a new video</a>
+    </nav>
+  </main>
+  <script src="config.js?v=upload-status-rest-1"></script>
+  <script>
+    const translations = {
+  "zh-Hant": {
+    "pageTitle": "\u67e5\u8a62\u4e0a\u50b3\u72c0\u614b",
+    "labelId": "\u4e0a\u50b3 ID",
+    "check": "\u67e5\u8a62\u72c0\u614b",
+    "loading": "\u6b63\u5728\u67e5\u8a62...",
+    "backLink": "\u8fd4\u56de\u5168\u606f\u5730\u5716",
+    "uploadLink": "\u4e0a\u50b3\u65b0\u5f71\u7247",
+    "submittedLabel": "\u63d0\u4ea4\u6642\u9593",
+    "pending": "\u7b49\u5f85\u5be9\u6279",
+    "approved": "\u5df2\u901a\u904e",
+    "rejected": "\u672a\u901a\u904e",
+    "local": "\u672c\u5730\u9810\u89bd",
+    "pendingNote": "\u5f71\u7247\u6b63\u5728\u7b49\u5f85\u7ba1\u7406\u54e1\u5be9\u6279\u3002",
+    "approvedNote": "\u5f71\u7247\u5df2\u901a\u904e\u5be9\u6279\uff0c\u53ef\u5728\u5730\u5716\u4e0a\u67e5\u770b\u3002",
+    "rejectedNote": "\u5f71\u7247\u672a\u901a\u904e\u5be9\u6279\uff0c\u4e0d\u6703\u986f\u793a\u5728\u5730\u5716\u4e0a\u3002",
+    "localNote": "\u5f71\u7247\u53ea\u5132\u5b58\u5728\u6b64\u700f\u89bd\u5668\uff0c\u672a\u63d0\u4ea4\u5be9\u6279\u3002",
+    "invalid": "\u8acb\u8f38\u5165\u5b8c\u6574\u6709\u6548\u7684\u4e0a\u50b3 ID\u3002",
+    "notFound": "\u627e\u4e0d\u5230\u6b64\u4e0a\u50b3 ID\u3002\u8acb\u6aa2\u67e5 ID \u5f8c\u91cd\u8a66\u3002",
+    "unavailable": "\u76ee\u524d\u7121\u6cd5\u67e5\u8a62\u72c0\u614b\uff0c\u8acb\u7a0d\u5f8c\u91cd\u8a66\u3002",
+    "connectionError": "\u7121\u6cd5\u9023\u7dda\u81f3\u72c0\u614b\u67e5\u8a62\u670d\u52d9\u3002\u8acb\u6aa2\u67e5\u7db2\u8def\u9023\u7dda\u5f8c\u91cd\u8a66\u3002",
+    "language": "\u8a9e\u8a00"
+  },
+  "zh-Hans": {
+    "pageTitle": "\u67e5\u8be2\u4e0a\u4f20\u72b6\u6001",
+    "labelId": "\u4e0a\u4f20 ID",
+    "check": "\u67e5\u8be2\u72b6\u6001",
+    "loading": "\u6b63\u5728\u67e5\u8be2...",
+    "backLink": "\u8fd4\u56de\u5168\u606f\u5730\u56fe",
+    "uploadLink": "\u4e0a\u4f20\u65b0\u5f71\u7247",
+    "submittedLabel": "\u63d0\u4ea4\u65f6\u95f4",
+    "pending": "\u7b49\u5f85\u5ba1\u6279",
+    "approved": "\u5df2\u901a\u8fc7",
+    "rejected": "\u672a\u901a\u8fc7",
+    "local": "\u672c\u5730\u9884\u89c8",
+    "pendingNote": "\u5f71\u7247\u6b63\u5728\u7b49\u5f85\u7ba1\u7406\u5458\u5ba1\u6279\u3002",
+    "approvedNote": "\u5f71\u7247\u5df2\u901a\u8fc7\u5ba1\u6279\uff0c\u53ef\u5728\u5730\u56fe\u4e0a\u67e5\u770b\u3002",
+    "rejectedNote": "\u5f71\u7247\u672a\u901a\u8fc7\u5ba1\u6279\uff0c\u4e0d\u4f1a\u663e\u793a\u5728\u5730\u56fe\u4e0a\u3002",
+    "localNote": "\u5f71\u7247\u4ec5\u4fdd\u5b58\u5728\u6b64\u6d4f\u89c8\u5668\uff0c\u672a\u63d0\u4ea4\u5ba1\u6279\u3002",
+    "invalid": "\u8bf7\u8f93\u5165\u5b8c\u6574\u6709\u6548\u7684\u4e0a\u4f20 ID\u3002",
+    "notFound": "\u627e\u4e0d\u5230\u6b64\u4e0a\u4f20 ID\u3002\u8bf7\u68c0\u67e5 ID \u540e\u91cd\u8bd5\u3002",
+    "unavailable": "\u76ee\u524d\u65e0\u6cd5\u67e5\u8be2\u72b6\u6001\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002",
+    "connectionError": "\u65e0\u6cd5\u8fde\u63a5\u72b6\u6001\u67e5\u8be2\u670d\u52a1\u3002\u8bf7\u68c0\u67e5\u7f51\u7edc\u8fde\u63a5\u540e\u91cd\u8bd5\u3002",
+    "language": "\u8bed\u8a00"
+  },
+  "en": {
+    "pageTitle": "Check upload status",
+    "labelId": "Upload ID",
+    "check": "Check status",
+    "loading": "Checking...",
+    "backLink": "Back to map",
+    "uploadLink": "Upload a new video",
+    "submittedLabel": "Submitted",
+    "pending": "Pending review",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "local": "Local preview",
+    "pendingNote": "Your video is waiting for an administrator to review it.",
+    "approvedNote": "Your video has been approved and is available on the map.",
+    "rejectedNote": "Your video was not approved and will not appear on the map.",
+    "localNote": "This video is saved only in this browser and has not been submitted for review.",
+    "invalid": "Enter a complete, valid upload ID.",
+    "notFound": "No upload was found with this ID. Check the ID and try again.",
+    "unavailable": "Status is unavailable right now. Please try again later.",
+    "connectionError": "Could not connect to the status service. Check your connection and try again.",
+    "language": "Language"
+  },
+  "pt": {
+    "pageTitle": "Estado do envio",
+    "labelId": "ID do envio",
+    "check": "Consultar estado",
+    "loading": "A consultar...",
+    "backLink": "Voltar ao mapa",
+    "uploadLink": "Enviar um novo v\u00eddeo",
+    "submittedLabel": "Enviado em",
+    "pending": "A aguardar revis\u00e3o",
+    "approved": "Aprovado",
+    "rejected": "Rejeitado",
+    "local": "Pr\u00e9-visualiza\u00e7\u00e3o local",
+    "pendingNote": "O v\u00eddeo est\u00e1 a aguardar a revis\u00e3o de um administrador.",
+    "approvedNote": "O v\u00eddeo foi aprovado e est\u00e1 dispon\u00edvel no mapa.",
+    "rejectedNote": "O v\u00eddeo n\u00e3o foi aprovado e n\u00e3o ser\u00e1 apresentado no mapa.",
+    "localNote": "Este v\u00eddeo est\u00e1 guardado apenas neste navegador e n\u00e3o foi enviado para revis\u00e3o.",
+    "invalid": "Introduza um ID de envio completo e v\u00e1lido.",
+    "notFound": "N\u00e3o foi encontrado nenhum envio com este ID. Verifique o ID e tente novamente.",
+    "unavailable": "O estado n\u00e3o est\u00e1 dispon\u00edvel neste momento. Tente novamente mais tarde.",
+    "connectionError": "N\u00e3o foi poss\u00edvel ligar ao servi\u00e7o. Verifique a liga\u00e7\u00e3o e tente novamente.",
+    "language": "Idioma"
+  }
+};
+    const query = new URLSearchParams(location.search);
+    let lang = translations[query.get('lang')] ? query.get('lang') : 'zh-Hant';
+    let busy = false, result = null, message = '';
+    const input = document.getElementById('uploadId');
+    const button = document.getElementById('check');
+    const t = key => translations[lang][key];
+
+    function renderResult() {
+      const section = document.getElementById('result');
+      section.hidden = !result && !message;
+      document.getElementById('submitted').hidden = true;
+      if (message) {
+        section.dataset.status = 'error';
+        document.getElementById('resultTitle').textContent = t(message);
+        document.getElementById('resultNote').textContent = '';
+      } else if (result) {
+        const status = result.is_local ? 'local' : result.status;
+        section.dataset.status = status;
+        document.getElementById('resultTitle').textContent = t(status);
+        document.getElementById('resultNote').textContent = t(status + 'Note');
+        const submitted = new Date(result.created_at);
+        if (result.created_at && !Number.isNaN(submitted.getTime())) {
+          document.getElementById('submitted').hidden = false;
+          document.getElementById('submittedTime').textContent = submitted.toLocaleString(lang);
+        }
+      }
+    }
+
+    function applyLanguage() {
+      document.documentElement.lang = lang;
+      document.title = t('pageTitle');
+      ['pageTitle','labelId','submittedLabel','backLink','uploadLink'].forEach(id => {
+        document.getElementById(id).textContent = t(id);
+      });
+      document.getElementById('langSelect').value = lang;
+      document.getElementById('langSelect').setAttribute('aria-label', t('language'));
+      document.getElementById('backLink').href = 'Holo-Map.html?lang=' + lang;
+      document.getElementById('uploadLink').href = 'Map-upload.html?lang=' + lang;
+      button.textContent = t(busy ? 'loading' : 'check');
+      renderResult();
+    }
+
+    async function checkStatus() {
+      if (busy) return;
+      const id = input.value.trim().toLowerCase();
+      result = null;
+      message = '';
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) {
+        message = 'invalid';
+        applyLanguage();
+        return;
+      }
+      input.value = id;
+      busy = true;
+      button.disabled = true;
+      input.readOnly = true;
+      applyLanguage();
+      try {
+        const record = await window.HoloMapAPI.fetchUploadStatus(id);
+        if (record && (record.is_local || ['pending','approved','rejected'].includes(record.status))) {
+          result = record;
+          try { localStorage.setItem('holoMapLastUploadId', id); } catch (error) {}
+        } else {
+          message = record ? 'unavailable' : 'notFound';
+        }
+        try { history.replaceState(null, '', '?lang=' + lang + '#id=' + id); } catch (error) {}
+      } catch (error) {
+        console.error('Upload status lookup failed:', error);
+        message = error.code === 'STATUS_CONNECTION_ERROR' ? 'connectionError' : 'unavailable';
+      } finally {
+        busy = false;
+        button.disabled = false;
+        input.readOnly = false;
+        applyLanguage();
+      }
+    }
+
+    document.getElementById('statusForm').addEventListener('submit', event => {
+      event.preventDefault();
+      checkStatus();
+    });
+    document.getElementById('langSelect').addEventListener('change', event => {
+      lang = event.target.value;
+      applyLanguage();
+    });
+    input.addEventListener('input', () => {
+      result = null;
+      message = '';
+      renderResult();
+    });
+    input.value = new URLSearchParams(location.hash.slice(1)).get('id') || '';
+    if (!input.value) {
+      try { input.value = localStorage.getItem('holoMapLastUploadId') || ''; } catch (error) {}
+    }
+    applyLanguage();
+    if (input.value) checkStatus();
+  </script>
+</body>
+</html>
+

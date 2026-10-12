@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>上載影片</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <style>
@@ -26,6 +26,25 @@
     .map{height:calc(100% - 56px)}
     .maphead{height:56px;display:flex;justify-content:space-between;align-items:center;padding:0 16px;box-sizing:border-box}
     .user-pin{width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 5px #2563eb55,0 2px 6px #0008}
+    [hidden]{display:none!important}
+    .receipt{margin-top:24px;border-top:1px solid #cbd5e1;padding-top:20px}
+    .receipt h2{font-size:20px;margin:0 0 12px;color:#15803d}
+    .receipt textarea{font:14px/1.5 monospace;width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;resize:none}
+    .receipt-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+    .receipt-actions a{color:#0284c7}
+    .receipt-actions button{display:inline-flex;align-items:center;gap:6px}
+    .receipt-actions svg{width:18px;height:18px}
+    .receipt p{line-height:1.5;color:#475569}
+    #copyMessage{min-height:24px}
+    @media(max-width:600px){
+      body{padding:12px}
+      .box{padding:20px}
+      .box h1,.box>p{padding-right:0}
+      .lang-toggle{position:static;display:block;margin:0 0 18px auto;min-height:44px}
+      .loc{flex-wrap:wrap}
+      .loc span{flex-basis:100%}
+      .loc button{flex:1;min-height:44px}
+    }
   </style>
 </head>
 <body>
@@ -50,6 +69,18 @@
       <button id="pick" type="button">選取地圖</button>
     </div>
     <button class="submit" id="submit" type="button">提交影片</button>
+    <section id="receipt" class="receipt" hidden aria-labelledby="receiptTitle">
+      <h2 id="receiptTitle" tabindex="-1">上傳成功，等待審批！</h2>
+      <label id="trackingLabel" for="trackingId">上傳 ID</label>
+      <textarea id="trackingId" rows="2" readonly spellcheck="false"></textarea>
+      <div class="receipt-actions">
+        <button id="copyId" type="button"><i data-lucide="copy" aria-hidden="true"></i><span id="copyIdText">複製 ID</span></button>
+        <a id="receiptStatusLink" href="Upload-status.html">查詢審批狀態</a>
+      </div>
+      <p id="receiptNote"></p>
+      <p id="copyMessage" role="status"></p>
+    </section>
+    <a id="statusLink" class="back" href="Upload-status.html">查詢上傳狀態</a>
     <a id="backLink" class="back" href="Holo-Map.html">返回全息地圖</a>
   </main>
 
@@ -65,6 +96,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script>
     const translations = {
@@ -91,7 +123,17 @@
         confirmDefault: '未獲取位置資訊，是否使用預設位置？',
         fileRequired: '請先選擇影片檔案！',
         uploadSuccess: '上傳成功，等待審批！',
-        uploadError: '上傳失敗: '
+        uploadError: '上傳失敗: ',
+        uploading: '正在上傳...',
+        statusLink: '查詢上傳狀態',
+        trackingLabel: '上傳 ID',
+        copyIdText: '複製 ID',
+        receiptStatusLink: '查詢審批狀態',
+        receiptNote: '請保留此 ID 或收藏查詢連結，以便隨時在任何裝置查看狀態。',
+        localSuccess: '影片已儲存在此裝置',
+        localNote: '這是本地預覽，未提交審批。此 ID 只能在目前瀏覽器查詢。',
+        copied: 'ID 已複製',
+        copyFallback: '請複製已選取的 ID。'
       },
       'zh-Hans': {
         pageTitle: '上传定位影片',
@@ -116,7 +158,17 @@
         confirmDefault: '未获取位置信息，是否使用默认位置？',
         fileRequired: '请先选择影片文件！',
         uploadSuccess: '上传成功，等待审批！',
-        uploadError: '上传失败: '
+        uploadError: '上传失败: ',
+        uploading: '正在上传...',
+        statusLink: '查询上传状态',
+        trackingLabel: '上传 ID',
+        copyIdText: '复制 ID',
+        receiptStatusLink: '查询审批状态',
+        receiptNote: '请保留此 ID 或收藏查询链接，以便随时在任何设备查看状态。',
+        localSuccess: '影片已保存在此设备',
+        localNote: '这是本地预览，未提交审批。此 ID 只能在当前浏览器查询。',
+        copied: 'ID 已复制',
+        copyFallback: '请复制已选中的 ID。'
       },
       en: {
         pageTitle: 'Upload geotagged video',
@@ -141,17 +193,38 @@
         confirmDefault: 'No location info yet. Use default location?',
         fileRequired: 'Please select a video file first!',
         uploadSuccess: 'Upload successful, awaiting approval!',
-        uploadError: 'Upload failed: '
+        uploadError: 'Upload failed: ',
+        uploading: 'Uploading...',
+        statusLink: 'Check upload status',
+        trackingLabel: 'Upload ID',
+        copyIdText: 'Copy ID',
+        receiptStatusLink: 'Check approval status',
+        receiptNote: 'Keep this ID or bookmark the status link to check from any device at any time.',
+        localSuccess: 'Video saved on this device',
+        localNote: 'This is a local preview and has not been submitted for review. This ID works only in this browser.',
+        copied: 'ID copied',
+        copyFallback: 'Copy the selected ID.'
       }
     };
 
     const state = { lang: 'zh-Hant' };
     const langSelect = document.getElementById('langSelect');
+    let uploadReceipt = null, uploading = false;
 
     function t(k){ return translations[state.lang][k]; }
 
     function applyLanguage(){
-      ['pageTitle','pageSubtitle','labelVideo','labelTitle','labelDesc','labelLocation','locate','pick','submit','backLink','mapTitle','close'].forEach(id => document.getElementById(id).textContent = t(id));
+      ['pageTitle','pageSubtitle','labelVideo','labelTitle','labelDesc','labelLocation','locate','pick','submit','backLink','mapTitle','close','statusLink','trackingLabel','copyIdText','receiptStatusLink'].forEach(id => document.getElementById(id).textContent = t(id));
+      document.documentElement.lang = state.lang;
+      document.title = t('pageTitle');
+      if (uploading) document.getElementById('submit').textContent = t('uploading');
+      if (uploadReceipt) {
+        document.getElementById('receiptTitle').textContent = t(uploadReceipt.is_local ? 'localSuccess' : 'uploadSuccess');
+        document.getElementById('receiptNote').textContent = t(uploadReceipt.is_local ? 'localNote' : 'receiptNote');
+      }
+      document.getElementById('copyMessage').textContent = '';
+      document.getElementById('statusLink').href = `Upload-status.html?lang=${state.lang}`;
+      if (uploadReceipt) document.getElementById('receiptStatusLink').href = `Upload-status.html?lang=${state.lang}#id=${uploadReceipt.id}`;
       document.getElementById('title').placeholder = t('placeholderTitle');
       document.getElementById('desc').placeholder = t('placeholderDesc');
       langSelect.value = state.lang;
@@ -202,7 +275,20 @@
     document.getElementById('close').onclick=()=>modal.classList.remove('open');
     map.on('click', e => setLoc(e.latlng.lat,e.latlng.lng,'Location acquired (manual selection)'));
 
+    document.getElementById('copyId').onclick=async()=>{
+      const input=document.getElementById('trackingId');
+      try {
+        await navigator.clipboard.writeText(input.value);
+        document.getElementById('copyMessage').textContent=t('copied');
+      } catch (error) {
+        input.focus();
+        input.select();
+        document.getElementById('copyMessage').textContent=t('copyFallback');
+      }
+    };
+
     document.getElementById('submit').onclick=async()=>{
+      if(uploading) return;
       const f=document.getElementById('file').files[0];
       if(!f) return alert(t('fileRequired'));
       if(!locationData){
@@ -211,26 +297,35 @@
       }
 
       const b=document.getElementById('submit');
+      uploading=true;
       b.disabled=true;
-      b.textContent='Uploading...';
+      b.textContent=t('uploading');
       try {
-        await window.HoloMapAPI.uploadVideo({
+        const record=await window.HoloMapAPI.uploadVideo({
           title: document.getElementById('title').value.trim() || 'Holographic location video',
           description: document.getElementById('desc').value.trim(),
           file: f,
           lat: locationData.latitude,
           lng: locationData.longitude
         });
-        alert(t('uploadSuccess'));
-        location.href='Holo-Map.html';
+        uploadReceipt=record;
+        document.getElementById('trackingId').value=record.id;
+        document.getElementById('receipt').hidden=false;
+        document.getElementById('file').value='';
+        try { localStorage.setItem('holoMapLastUploadId',record.id); } catch (error) {}
+        document.getElementById('receiptTitle').focus();
       } catch (e) {
         alert(t('uploadError') + e.message);
+      } finally {
+        uploading=false;
         b.disabled=false;
-        b.textContent=t('submit');
+        applyLanguage();
       }
     };
 
+    if(translations[q.get('lang')]) state.lang=q.get('lang');
     applyLanguage();
+    if(window.lucide) lucide.createIcons();
   </script>
 </body>
 </html>

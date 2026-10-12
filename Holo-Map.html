@@ -35,7 +35,9 @@
     .panel{
       top:24px;
       left:24px;
-      width:360px
+      width:360px;
+      max-height:calc(100svh - 88px);
+      overflow-y:auto
     }
     .legend{
       top:24px;
@@ -74,6 +76,14 @@
       background:#334155;
       color:#fff;
       cursor:pointer
+    }
+    .status-link{
+      display:block;
+      margin-top:8px;
+      padding:10px;
+      text-align:center;
+      color:#0284c7;
+      line-height:1.5
     }
     .lang-toggle{
       display:none;
@@ -167,13 +177,20 @@
       font-size:11px;
       color:#0284c7
     }
+    .info-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+    .phone{font-weight:600;color:#0f172a}
+    .like-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:14px}
+    .like-btn.liked{background:#ffe4e6;border-color:#fda4af}
+    .like-btn:disabled{opacity:.75;cursor:default}
+    .like-count{font-weight:600}
     @media(max-width:600px){
       .panel{
         left:12px;
         right:12px;
         bottom:12px;
         top:auto;
-        width:auto
+        width:auto;
+        max-height:calc(100svh - 64px)
       }
       .legend{
         top:12px;
@@ -212,6 +229,7 @@
       <div class="location" id="result">正在獲取您的當前位置...</div>
       <button class="locate" id="locateBtn" type="button">顯示當前位置</button>
       <a class="action" id="uploadLink" href="Map-upload.html">+ 上載定位視頻</a>
+      <a class="status-link" id="statusLink" href="Upload-status.html">查詢上傳狀態</a>
     </section>
     <div class="legend">
       <div id="legendSchool">🔵 學校地標</div>
@@ -231,6 +249,7 @@ const translations = {
     resultWaiting: '正在獲取您的當前位置...',
     locateBtn: '顯示當前位置',
     uploadText: '+ 上載定位視頻',
+    statusText: '查詢上傳狀態',
     legendSchool: '🔵 學校地標',
     legendMuseum: '🟡 博物館地標',
     legendVideo: '🟣 用戶上傳影片',
@@ -238,7 +257,13 @@ const translations = {
     success: '已顯示當前位置',
     noSupport: '您的瀏覽器不支援地理定位',
     locateError: '無法獲取位置信息: ',
-    statusLabel: 'coords:'
+    statusLabel: 'coords:',
+    phoneLabel: '電話:',
+    moreInfo: '更多資訊',
+    likeAria: '點讚',
+    tagSchool: '學校',
+    tagMuseum: '博物館',
+    tagVideo: '影音地標'
   },
   'zh-Hans': {
     languageLabel: '语言',
@@ -247,6 +272,7 @@ const translations = {
     resultWaiting: '正在获取您当前的位置...',
     locateBtn: '显示当前位置',
     uploadText: '+ 上传定位视频',
+    statusText: '查询上传状态',
     legendSchool: '🔵 学校地标',
     legendMuseum: '🟡 博物馆地标',
     legendVideo: '🟣 用户上传影片',
@@ -254,7 +280,13 @@ const translations = {
     success: '已显示当前位置',
     noSupport: '您的浏览器不支持地理定位',
     locateError: '无法获取位置信息: ',
-    statusLabel: 'coords:'
+    statusLabel: 'coords:',
+    phoneLabel: '电话:',
+    moreInfo: '更多资讯',
+    likeAria: '点赞',
+    tagSchool: '学校',
+    tagMuseum: '博物馆',
+    tagVideo: '影音地标'
   },
   en: {
     languageLabel: 'Language',
@@ -263,6 +295,7 @@ const translations = {
     resultWaiting: 'Fetching your current location...',
     locateBtn: 'Show current location',
     uploadText: '+ Upload location video',
+    statusText: 'Check upload status',
     legendSchool: '🔵 School landmark',
     legendMuseum: '🟡 Museum landmark',
     legendVideo: '🟣 User upload video',
@@ -270,7 +303,13 @@ const translations = {
     success: 'Current location shown',
     noSupport: 'Your browser does not support geolocation',
     locateError: 'Unable to get location: ',
-    statusLabel: 'coords:'
+    statusLabel: 'coords:',
+    phoneLabel: 'Phone:',
+    moreInfo: 'More info',
+    likeAria: 'Like',
+    tagSchool: 'School',
+    tagMuseum: 'Museum',
+    tagVideo: 'Video landmark'
   },
   pt: {
     languageLabel: 'Idioma',
@@ -279,6 +318,7 @@ const translations = {
     resultWaiting: 'A obter a sua localização atual...',
     locateBtn: 'Mostrar localização atual',
     uploadText: '+ Carregar vídeo de localização',
+    statusText: 'Estado do envio',
     legendSchool: '🔵 Escola',
     legendMuseum: '🟡 Museu',
     legendVideo: '🟣 Vídeo enviado por utilizadores',
@@ -286,10 +326,17 @@ const translations = {
     success: 'Localização atual apresentada',
     noSupport: 'O seu navegador não suporta geolocalização',
     locateError: 'Não foi possível obter a localização: ',
-    statusLabel: 'Coordenadas:'
+    statusLabel: 'Coordenadas:',
+    phoneLabel: 'Telefone:',
+    moreInfo: 'Mais informações',
+    likeAria: 'Curtir',
+    tagSchool: 'Escola',
+    tagMuseum: 'Museu',
+    tagVideo: 'Marcador de vídeo'
   }
 };
-const state = { lang: 'zh-Hant' };
+const requestedLanguage = new URLSearchParams(location.search).get('lang');
+const state = { lang: translations[requestedLanguage] ? requestedLanguage : 'zh-Hant' };
 const placeTitleTranslations = {
   '澳門慈幼中學': { 'zh-Hant': '澳門慈幼中學', 'zh-Hans': '澳门慈幼中学', en: 'Macau Immaculate Conception College', pt: 'Colégio Imaculado Coração de Maria' },
   '澳門科學館': { 'zh-Hant': '澳門科學館', 'zh-Hans': '澳门科学馆', en: 'Macau Science Center', pt: 'Centro de Ciência de Macau' },
@@ -297,10 +344,61 @@ const placeTitleTranslations = {
   '博物館': { 'zh-Hant': '博物館', 'zh-Hans': '博物馆', en: 'Museum', pt: 'Museu' }
 };
 function t(k) { return translations[state.lang][k]; }
-function translatePlaceCard(title, tag) {
-  const translatedTitle = (placeTitleTranslations[title] && placeTitleTranslations[title][state.lang]) || title;
-  const translatedTag = (placeTitleTranslations[tag] && placeTitleTranslations[tag][state.lang]) || tag;
-  return { title: translatedTitle, tag: translatedTag };
+const placeText = {
+  'zh-Hant': {
+    school: { title: '澳門慈幼中學', address: '澳門風順堂街十六號', tag: '學校', description: '澳門慈幼中學' },
+    museum: { title: '澳門科學館', address: '澳門孫逸仙大馬路', tag: '博物館', description: '澳門科學館' },
+    video: { title: '全息定位影片', tag: '影音地標', description: '全息定位影片' }
+  },
+  'zh-Hans': {
+    school: { title: '澳门慈幼中学', address: '澳门风顺堂街十六号', tag: '学校', description: '澳门慈幼中学' },
+    museum: { title: '澳门科学馆', address: '澳门孙逸仙大马路', tag: '博物馆', description: '澳门科学馆' },
+    video: { title: '全息定位影片', tag: '影音地标', description: '全息定位影片' }
+  },
+  en: {
+    school: { title: 'Macau School', address: '16 Rua do Campo, Macau', tag: 'School', description: 'School landmark' },
+    museum: { title: 'Macau Museum', address: 'Avenida Sun Yat Sen, Macau', tag: 'Museum', description: 'Museum landmark' },
+    video: { title: 'Holographic Location Video', tag: 'Video landmark', description: 'Holographic location video' }
+  },
+  pt: {
+    school: { title: 'Escola de Macau', address: 'Rua do Campo n.º 16, Macau', tag: 'Escola', description: 'Ponto de referência escolar' },
+    museum: { title: 'Museu de Macau', address: 'Avenida Sun Yat Sen, Macau', tag: 'Museu', description: 'Ponto de referência do museu' },
+    video: { title: 'Vídeo de localização holográfica', tag: 'Marcador de vídeo', description: 'Vídeo de localização holográfica' }
+  }
+};
+function tagLabel(key){
+  if(!key) return '';
+  const map = { school: 'tagSchool', museum: 'tagMuseum', video: 'tagVideo' };
+  const tk = map[key] || key;
+  return translations[state.lang] && translations[state.lang][tk] ? translations[state.lang][tk] : key;
+}
+function getPlaceMeta(type){
+  const source = placeText[state.lang] && placeText[state.lang][type] ? placeText[state.lang][type] : placeText['zh-Hant'][type];
+  if (!source) return { title: '', address: '', tag: '', description: '' };
+  const canonical = placeText['zh-Hant'][type];
+  const titleTranslation = canonical && placeTitleTranslations[canonical.title];
+  const tagTranslation = canonical && placeTitleTranslations[canonical.tag];
+  return {
+    ...source,
+    title: titleTranslation ? titleTranslation[state.lang] : source.title,
+    tag: tagTranslation ? tagTranslation[state.lang] : source.tag
+  };
+}
+function buildCardHtml(meta){
+  const title = meta.title || '';
+  const tag = meta.tag || '';
+  const image = meta.image || '';
+  const address = meta.address || '';
+  const phone = meta.phone || '';
+  const link = meta.link || '';
+  const video = meta.video || '';
+  const description = meta.description || '';
+  const mediaHtml = video ? `<video controls src="${video}"></video>` : image ? `<img src="${image}" alt="${title}">` : '';
+  const addressHtml = address ? `<div class="info-row"><div>${address}</div></div>` : '';
+  const phoneHtml = phone ? `<div class="info-row"><div><span class="phone-label">${t('phoneLabel')}</span> <span class="phone">${phone}</span></div><button class="like-btn" data-like-key="${meta.likeKey || ''}" type="button" aria-label="${t('likeAria')}">👍 <span class="like-count">${meta.likeCount || 0}</span></button></div>` : '';
+  const descHtml = description ? `<p>${description}</p>` : '';
+  const linkHtml = link ? `<p><a class="more-info-link" href="${link}" target="_blank" rel="noopener">${t('moreInfo')}</a></p>` : '';
+  return `<div class="card"><h3>${title} <span class="tag" data-tag-key="${meta.type}">${tag}</span></h3><section>${mediaHtml}${addressHtml}${phoneHtml}${descHtml}${linkHtml}</section></div>`;
 }
 function applyLanguage() {
   document.body.classList.toggle('simplified-chinese-font', state.lang === 'zh-Hans');
@@ -312,21 +410,38 @@ function applyLanguage() {
   document.getElementById('pageSubtitle').textContent = t('pageSubtitle');
   document.getElementById('locateBtn').textContent = t('locateBtn');
   document.getElementById('uploadLink').textContent = t('uploadText');
+  document.getElementById('statusLink').textContent = t('statusText');
+  document.getElementById('statusLink').href = `Upload-status.html?lang=${state.lang}`;
   document.getElementById('legendSchool').textContent = t('legendSchool');
   document.getElementById('legendMuseum').textContent = t('legendMuseum');
   document.getElementById('legendVideo').textContent = t('legendVideo');
   document.getElementById('legendCurrent').textContent = t('legendCurrent');
   document.getElementById('langToggle').value = state.lang;
-  if (window.landmarkMarkers) {
-    window.landmarkMarkers.forEach(function (item) {
-      const translated = translatePlaceCard(item.title, item.tag);
-      item.marker.setPopupContent(card(translated.title, translated.tag, item.image, item.address, item.phone, item.link, item.video, item.description));
-    });
-  }
   const result = document.getElementById('result');
   if (result && !result.dataset.hasLocation) {
     result.textContent = t('resultWaiting');
   }
+
+  map.eachLayer(layer => {
+    if (layer && layer._cardMeta) {
+      if (layer._cardMeta.type === 'school' || layer._cardMeta.type === 'museum') {
+        const place = getPlaceMeta(layer._cardMeta.type);
+        Object.assign(layer._cardMeta, place);
+      }
+      layer.setPopupContent(buildCardHtml(layer._cardMeta));
+    }
+  });
+
+  document.querySelectorAll('.leaflet-popup .phone-label').forEach(el => el.textContent = t('phoneLabel'));
+  document.querySelectorAll('.leaflet-popup .more-info-link').forEach(el => el.textContent = t('moreInfo'));
+  document.querySelectorAll('.leaflet-popup .like-btn').forEach(btn => {
+    btn.setAttribute('aria-label', t('likeAria'));
+  });
+  document.querySelectorAll('.leaflet-popup .tag').forEach(el => {
+    const key = el.dataset.tagKey;
+    const translated = key ? tagLabel(key) : el.textContent;
+    if (translated) el.textContent = translated;
+  });
 }
 document.getElementById('langToggle').addEventListener('change', (event) => {
   state.lang = event.target.value;
@@ -359,51 +474,172 @@ function icon(c){
 const icons={
   school:icon('#60a5fa'),museum:icon('#fbbf24'),video:icon('#a855f7')
 };
-function card(title,tag,image,address,phone,link,video,description){
-  return `<div class="card"><h3>${title} <span class="tag">${tag}</span></h3><section>${video?`<video controls src="${video}"></video>`:image?`<img src="${image}" alt="${title}">`:''}${description?`<p>${description}</p>`:''}${address?`<p>📍 ${address}</p>`:''}${phone?`<p>☎ ${phone}</p>`:''}${link?`<a href="${link}" target="_blank">更多資訊 →</a>`:''}</section></div>`
-}
-function add(lat,lng,content,type){
+function add(lat,lng,meta,type){
   const marker = L.marker([lat,lng],{
     icon:icons[type]
-  }).addTo(map).bindPopup(content);
+  }).addTo(map);
+  marker._cardMeta = meta;
+  marker.bindPopup(buildCardHtml(meta));
   return marker;
 }
-window.landmarkMarkers = [
-  {
-    title: '澳門慈幼中學',
-    tag: '學校',
-    image: './assets/img/IS_School_Macau.png',
-    address: '澳門風順堂街十六號',
-    phone: '(853) 2857 3033',
-    link: 'http://ism.edu.mo',
-    video: null,
-    description: null,
-    marker: add(22.1895567,113.5371289,card('澳門慈幼中學','學校','./assets/img/IS_School_Macau.png','澳門風順堂街十六號','(853) 2857 3033','http://ism.edu.mo'),'school')
-  },
-  {
-    title: '澳門科學館',
-    tag: '博物館',
-    image: './assets/img/MSC.jpg',
-    address: '澳門孫逸仙大馬路',
-    phone: '(853) 2888 0822',
-    link: 'https://www.msc.org.mo/zh',
-    video: null,
-    description: null,
-    marker: add(22.186457, 113.556915,card('澳門科學館','博物館','./assets/img/MSC.jpg','澳門孫逸仙大馬路','(853) 2888 0822','https://www.msc.org.mo/zh'),'museum')
-  }
-];
+
+const schoolMeta = {
+  type: 'school',
+  title: getPlaceMeta('school').title,
+  tag: getPlaceMeta('school').tag,
+  image: './assets/img/IS_School_Macau.png',
+  address: getPlaceMeta('school').address,
+  phone: '(853) 2857 3033',
+  link: 'http://ism.edu.mo',
+  likeKey: 'school|macau|28573033',
+  likeCount: 0,
+  description: getPlaceMeta('school').description
+};
+const museumMeta = {
+  type: 'museum',
+  title: getPlaceMeta('museum').title,
+  tag: getPlaceMeta('museum').tag,
+  image: './assets/img/MSC.jpg',
+  address: getPlaceMeta('museum').address,
+  phone: '(853) 2888 0822',
+  link: 'https://www.msc.org.mo/zh',
+  likeKey: 'museum|macau|28880822',
+  likeCount: 0,
+  description: getPlaceMeta('museum').description
+};
+add(22.1895567,113.5371289,schoolMeta,'school');
+add(22.186457, 113.556915,museumMeta,'museum');
 async function loadVideos(){
   try{
     const videos=await window.HoloMapAPI.fetchVideos();
     (videos||[]).forEach(v=>{
       if(v.lat==null||v.lng==null)return;
-      add(Number(v.lat),Number(v.lng),card(v.title||'全息定位影片','影音地標',null,`經緯度: ${Number(v.lat).toFixed(4)}, ${Number(v.lng).toFixed(4)}`,null,null,v.video_url,v.description||''),'video')
-    })
+      const meta = {
+        type: 'video',
+        title: v.title || getPlaceMeta('video').title,
+        tag: getPlaceMeta('video').tag,
+        address: `經緯度: ${Number(v.lat).toFixed(4)}, ${Number(v.lng).toFixed(4)}`,
+        phone: '',
+        link: '',
+        video: v.video_url || '',
+        likeKey: `video|${v.id || Number(v.lat).toFixed(4)}|${Number(v.lng).toFixed(4)}`,
+        likeCount: 0,
+        description: v.description || getPlaceMeta('video').description
+      };
+      add(Number(v.lat),Number(v.lng),meta,'video');
+    });
   }
   catch(e){
     console.error(e)
   }
 }
+
+function getLikeLocalKey(key){ return 'holomap:liked:' + key }
+function getLikeCountLocalKey(key){ return 'holomap:likeCount:' + key }
+function hasLiked(key){
+  try { return localStorage.getItem(getLikeLocalKey(key)) === '1'; }
+  catch (e) { return false; }
+}
+function setLiked(key){
+  try { localStorage.setItem(getLikeLocalKey(key), '1'); }
+  catch (e) {}
+}
+function getLocalLikeCount(key){
+  try { return Number(localStorage.getItem(getLikeCountLocalKey(key)) || 0); }
+  catch (e) { return 0; }
+}
+function setLocalLikeCount(key, value){
+  try { localStorage.setItem(getLikeCountLocalKey(key), String(value)); }
+  catch (e) {}
+}
+
+async function fetchLikeCount(key){
+  const fallback = getLocalLikeCount(key);
+  if (!window.HoloMapAPI || !window.HoloMapAPI.isCloudEnabled || !window.HoloMapAPI.isCloudEnabled()) {
+    return fallback;
+  }
+  const supabase = window.HoloMapAPI.getClient();
+  if (!supabase) return fallback;
+  try {
+    const { data, error } = await supabase.from('map_likes').select('count').eq('key', key).maybeSingle();
+    if (error && error.code !== 'PGRST116') throw error;
+    const count = Number((data && data.count) || fallback || 0);
+    setLocalLikeCount(key, count);
+    return count;
+  } catch (e) {
+    console.warn('fetchLikeCount failed:', e);
+    return fallback;
+  }
+}
+
+async function incrementLike(key){
+  if (hasLiked(key)) {
+    return fetchLikeCount(key);
+  }
+
+  const fallback = getLocalLikeCount(key);
+  if (window.HoloMapAPI && window.HoloMapAPI.isCloudEnabled && window.HoloMapAPI.isCloudEnabled()) {
+    const supabase = window.HoloMapAPI.getClient();
+    if (supabase) {
+      try {
+        const { data: current, error: currentErr } = await supabase.from('map_likes').select('count').eq('key', key).maybeSingle();
+        if (currentErr && currentErr.code !== 'PGRST116') throw currentErr;
+        const next = Number((current && current.count) || fallback || 0) + 1;
+        const { data, error } = await supabase.from('map_likes').upsert({ key, count: next }, { onConflict: 'key' }).select('count').single();
+        if (!error && data) {
+          const finalCount = Number(data.count || next);
+          setLocalLikeCount(key, finalCount);
+          setLiked(key);
+          return finalCount;
+        }
+        if (error) throw error;
+      } catch (e) {
+        console.warn('incrementLike cloud failed:', e);
+      }
+    }
+  }
+
+  const next = fallback + 1;
+  setLocalLikeCount(key, next);
+  setLiked(key);
+  return next;
+}
+
+map.on('popupopen', async function(e){
+  const popupEl = e.popup.getElement();
+  if (!popupEl) return;
+  popupEl.querySelectorAll('.phone-label').forEach(el => {
+    el.textContent = t('phoneLabel');
+  });
+  popupEl.querySelectorAll('.more-info-link').forEach(el => {
+    el.textContent = t('moreInfo');
+  });
+  popupEl.querySelectorAll('.tag').forEach(el => {
+    const key = el.dataset.tagKey;
+    if (key) el.textContent = tagLabel(key);
+  });
+  popupEl.querySelectorAll('.like-btn').forEach(async (btn) => {
+    btn.setAttribute('aria-label', t('likeAria'));
+    const key = btn.dataset.likeKey;
+    const countSpan = btn.querySelector('.like-count');
+    const currentCount = await fetchLikeCount(key);
+    if (countSpan) countSpan.textContent = String(currentCount);
+    if (hasLiked(key)) {
+      btn.classList.add('liked');
+      btn.disabled = true;
+      return;
+    }
+    btn.onclick = async function (event) {
+      event.preventDefault();
+      if (hasLiked(key)) return;
+      btn.disabled = true;
+      const newCount = await incrementLike(key);
+      if (countSpan) countSpan.textContent = String(newCount);
+      btn.classList.add('liked');
+    };
+  });
+});
+
 let userMarker=null,userCircle=null;
 function showLocation(lat,lng,accuracy){
   const pos=[lat,lng];
