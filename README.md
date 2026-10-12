@@ -1,25 +1,29 @@
 # Novel-Map
 
-Novel-Map is a static holographic map demo for Macau. Visitors can view approved location videos on `Holo-Map.html`, upload new videos from `Map-upload.html`, and admins can review pending uploads from `Admin.html`.
+Novel-Map is a static holographic map demo for Macau. Visitors can view approved community landmarks and location videos on `Holo-Map.html`, upload new videos from `Map-upload.html`, and admins can review pending submissions from `Admin.html`.
 
 ## Pages
 
-- `Holo-Map.html` - Main map view with school, museum, and approved user video markers.
+- `Holo-Map.html` - Main map view with school, museum, and approved user-submitted markers.
 - `Map-upload.html` - Video upload form with GPS detection and manual map location selection.
 - `Upload-status.html` - Check an upload's current status using its upload ID.
-- `Admin.html` - Admin review page for approving or rejecting pending videos.
+- `Admin.html` - Admin review page for approving or rejecting pending videos and landmarks.
 
 ## Upload Status Setup
 
 Run `supabase-upload-status.sql` in the Supabase SQL Editor after the existing manual approval setup. It adds the status lookup function without making pending or rejected video records publicly readable.
 
+## User-Created Map Landmarks
+
+Run `supabase-map-landmarks.sql` in the Supabase SQL Editor after `supabase-manual-approval.sql`. Visitors can submit a landmark by choosing a map location and filling in its card details. Submitted landmarks remain hidden until an admin approves them in `Admin.html`.
+
 ## Review Workflow
 
-1. Users upload videos from `Map-upload.html`.
-2. New cloud videos are saved with `pending` status. The success receipt displays a unique upload ID and a link to check its status.
+1. Users upload videos from `Map-upload.html` or submit landmarks from `Holo-Map.html`.
+2. New cloud videos and landmarks are saved with `pending` status. Video uploads display a unique upload ID and a link to check their status.
 3. Admin signs in at `Admin.html`.
-4. Click the approve button in `Admin.html` to publish a video to the map, or the reject button to keep it hidden.
-5. `Holo-Map.html` only displays videos with `approved` status.
+4. Click approve to publish a video or landmark to the map, or reject to keep it hidden.
+5. `Holo-Map.html` only displays approved videos and landmarks.
 
 ## Checking an Upload
 

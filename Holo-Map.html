@@ -183,6 +183,35 @@
     .like-btn.liked{background:#ffe4e6;border-color:#fda4af}
     .like-btn:disabled{opacity:.75;cursor:default}
     .like-count{font-weight:600}
+    .landmark-dialog{
+      width:min(440px,calc(100vw - 40px));
+      max-height:calc(100svh - 40px);
+      box-sizing:border-box;
+      overflow-y:auto;
+      padding:20px;
+      border:1px solid #cbd5e1;
+      border-radius:16px;
+      color:#0f172a;
+      box-shadow:0 12px 32px #64748b55
+    }
+    .landmark-dialog::backdrop{background:#0f172a88}
+    .landmark-dialog h2{margin:0 0 12px}
+    .landmark-dialog label{display:block;margin-top:10px;font-weight:600}
+    .landmark-dialog input,.landmark-dialog textarea{
+      width:100%;
+      box-sizing:border-box;
+      margin-top:4px;
+      padding:10px;
+      border:1px solid #cbd5e1;
+      border-radius:8px;
+      font:inherit
+    }
+    .landmark-dialog textarea{min-height:80px;resize:vertical}
+    .landmark-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+    .landmark-dialog-actions button{padding:9px 14px;border:0;border-radius:8px;cursor:pointer}
+    .landmark-submit{background:#0ea5e9;color:#fff}
+    .landmark-cancel{background:#e2e8f0;color:#0f172a}
+    .landmark-placement{color:#0369a1;font-size:14px}
     @media(max-width:600px){
       .panel{
         left:12px;
@@ -229,8 +258,35 @@
       <div class="location" id="result">正在獲取您的當前位置...</div>
       <button class="locate" id="locateBtn" type="button">顯示當前位置</button>
       <a class="action" id="uploadLink" href="Map-upload.html">+ 上載定位視頻</a>
+      <button class="action locate" id="addLandmarkBtn" type="button">+ 新增地標</button>
+      <p class="landmark-placement" id="landmarkPlacementStatus" hidden></p>
       <a class="status-link" id="statusLink" href="Upload-status.html">查詢上傳狀態</a>
     </section>
+    <dialog class="landmark-dialog" id="landmarkDialog" aria-labelledby="landmarkFormTitle">
+      <form id="landmarkForm">
+        <h2 id="landmarkFormTitle">新增地標資訊</h2>
+        <p id="landmarkLocationText"></p>
+        <label for="landmarkTitle" id="landmarkTitleLabel">名稱</label>
+        <input id="landmarkTitle" name="title" maxlength="100" required>
+        <label for="landmarkTag" id="landmarkTagLabel">標籤</label>
+        <input id="landmarkTag" name="tag" maxlength="40" required>
+        <label for="landmarkAddress" id="landmarkAddressLabel">地址</label>
+        <input id="landmarkAddress" name="address" maxlength="200">
+        <label for="landmarkPhone" id="landmarkPhoneLabel">電話</label>
+        <input id="landmarkPhone" name="phone" maxlength="40" type="tel">
+        <label for="landmarkImage" id="landmarkImageLabel">圖片網址</label>
+        <input id="landmarkImage" name="image_url" maxlength="2048" type="url">
+        <label for="landmarkLink" id="landmarkLinkLabel">網站</label>
+        <input id="landmarkLink" name="link" maxlength="2048" type="url">
+        <label for="landmarkDescription" id="landmarkDescriptionLabel">描述</label>
+        <textarea id="landmarkDescription" name="description" maxlength="1000"></textarea>
+        <p class="landmark-placement" id="landmarkFormStatus" role="status"></p>
+        <div class="landmark-dialog-actions">
+          <button class="landmark-cancel" id="landmarkCancel" type="button">取消</button>
+          <button class="landmark-submit" id="landmarkSubmit" type="submit">提交審核</button>
+        </div>
+      </form>
+    </dialog>
     <div class="legend">
       <div id="legendSchool">🔵 學校地標</div>
       <div id="legendMuseum">🟡 博物館地標</div>
@@ -238,7 +294,7 @@
       <div id="legendCurrent">🔷 當前位置</div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js"></script>
+    <script src="config.js?v=map-landmarks-1"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
 const translations = {
@@ -263,7 +319,22 @@ const translations = {
     likeAria: '點讚',
     tagSchool: '學校',
     tagMuseum: '博物館',
-    tagVideo: '影音地標'
+    tagVideo: '影音地標',
+    addLandmark: '+ 新增地標',
+    placeLandmark: '請在地圖上點選地標位置',
+    landmarkFormTitle: '新增地標資訊卡',
+    landmarkLocation: '位置',
+    landmarkTitle: '名稱',
+    landmarkTag: '標籤',
+    landmarkAddress: '地址',
+    landmarkPhone: '電話',
+    landmarkImage: '圖片網址',
+    landmarkLink: '網站連結',
+    landmarkDescription: '描述',
+    landmarkSubmit: '提交審核',
+    landmarkCancel: '取消',
+    landmarkSubmitting: '正在提交...',
+    landmarkSubmitted: '已提交，管理員審核通過後會顯示在地圖上。'
   },
   'zh-Hans': {
     languageLabel: '语言',
@@ -286,7 +357,22 @@ const translations = {
     likeAria: '点赞',
     tagSchool: '学校',
     tagMuseum: '博物馆',
-    tagVideo: '影音地标'
+    tagVideo: '影音地标',
+    addLandmark: '+ 新增地标',
+    placeLandmark: '请在地图上点击地标位置',
+    landmarkFormTitle: '新增地标信息卡',
+    landmarkLocation: '位置',
+    landmarkTitle: '名称',
+    landmarkTag: '标签',
+    landmarkAddress: '地址',
+    landmarkPhone: '电话',
+    landmarkImage: '图片网址',
+    landmarkLink: '网站链接',
+    landmarkDescription: '描述',
+    landmarkSubmit: '提交审核',
+    landmarkCancel: '取消',
+    landmarkSubmitting: '正在提交...',
+    landmarkSubmitted: '已提交，管理员审核通过后会显示在地图上。'
   },
   en: {
     languageLabel: 'Language',
@@ -309,7 +395,22 @@ const translations = {
     likeAria: 'Like',
     tagSchool: 'School',
     tagMuseum: 'Museum',
-    tagVideo: 'Video landmark'
+    tagVideo: 'Video landmark',
+    addLandmark: '+ Add landmark',
+    placeLandmark: 'Click the map to choose the landmark location',
+    landmarkFormTitle: 'Add a landmark card',
+    landmarkLocation: 'Location',
+    landmarkTitle: 'Name',
+    landmarkTag: 'Tag',
+    landmarkAddress: 'Address',
+    landmarkPhone: 'Phone',
+    landmarkImage: 'Image URL',
+    landmarkLink: 'Website',
+    landmarkDescription: 'Description',
+    landmarkSubmit: 'Submit for review',
+    landmarkCancel: 'Cancel',
+    landmarkSubmitting: 'Submitting...',
+    landmarkSubmitted: 'Submitted. The landmark will appear after admin approval.'
   },
   pt: {
     languageLabel: 'Idioma',
@@ -332,11 +433,30 @@ const translations = {
     likeAria: 'Curtir',
     tagSchool: 'Escola',
     tagMuseum: 'Museu',
-    tagVideo: 'Marcador de vídeo'
+    tagVideo: 'Marcador de vídeo',
+    addLandmark: '+ Adicionar local',
+    placeLandmark: 'Clique no mapa para escolher a localização',
+    landmarkFormTitle: 'Adicionar cartão de local',
+    landmarkLocation: 'Localização',
+    landmarkTitle: 'Nome',
+    landmarkTag: 'Etiqueta',
+    landmarkAddress: 'Morada',
+    landmarkPhone: 'Telefone',
+    landmarkImage: 'URL da imagem',
+    landmarkLink: 'Website',
+    landmarkDescription: 'Descrição',
+    landmarkSubmit: 'Enviar para revisão',
+    landmarkCancel: 'Cancelar',
+    landmarkSubmitting: 'A enviar...',
+    landmarkSubmitted: 'Enviado. O local será mostrado após aprovação do administrador.'
   }
 };
 const requestedLanguage = new URLSearchParams(location.search).get('lang');
-const state = { lang: translations[requestedLanguage] ? requestedLanguage : 'zh-Hant' };
+const state = {
+  lang: translations[requestedLanguage] ? requestedLanguage : 'zh-Hant',
+  addingLandmark: false,
+  selectedLandmarkLocation: null
+};
 const placeTitleTranslations = {
   '澳門慈幼中學': { 'zh-Hant': '澳門慈幼中學', 'zh-Hans': '澳门慈幼中学', en: 'Macau Immaculate Conception College', pt: 'Colégio Imaculado Coração de Maria' },
   '澳門科學館': { 'zh-Hant': '澳門科學館', 'zh-Hans': '澳门科学馆', en: 'Macau Science Center', pt: 'Centro de Ciência de Macau' },
@@ -385,20 +505,25 @@ function getPlaceMeta(type){
   };
 }
 function buildCardHtml(meta){
-  const title = meta.title || '';
-  const tag = meta.tag || '';
-  const image = meta.image || '';
-  const address = meta.address || '';
-  const phone = meta.phone || '';
-  const link = meta.link || '';
-  const video = meta.video || '';
-  const description = meta.description || '';
+  const escapeHtml = value => String(value || '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[character]));
+  const title = escapeHtml(meta.title);
+  const tag = escapeHtml(meta.tag);
+  const image = escapeHtml(meta.image);
+  const address = escapeHtml(meta.address);
+  const phone = escapeHtml(meta.phone);
+  const video = escapeHtml(meta.video);
+  const description = escapeHtml(meta.description);
+  const rawLink = String(meta.link || '');
+  const link = /^https?:\/\/\S+$/i.test(rawLink) ? escapeHtml(rawLink) : '';
+  const tagKey = ['school', 'museum', 'video'].includes(meta.type) ? meta.type : '';
   const mediaHtml = video ? `<video controls src="${video}"></video>` : image ? `<img src="${image}" alt="${title}">` : '';
   const addressHtml = address ? `<div class="info-row"><div>${address}</div></div>` : '';
-  const phoneHtml = phone ? `<div class="info-row"><div><span class="phone-label">${t('phoneLabel')}</span> <span class="phone">${phone}</span></div><button class="like-btn" data-like-key="${meta.likeKey || ''}" type="button" aria-label="${t('likeAria')}">👍 <span class="like-count">${meta.likeCount || 0}</span></button></div>` : '';
+  const phoneHtml = phone ? `<div class="info-row"><div><span class="phone-label">${t('phoneLabel')}</span> <span class="phone">${phone}</span></div>${meta.likeKey ? `<button class="like-btn" data-like-key="${escapeHtml(meta.likeKey)}" type="button" aria-label="${t('likeAria')}">👍 <span class="like-count">${meta.likeCount || 0}</span></button>` : ''}</div>` : '';
   const descHtml = description ? `<p>${description}</p>` : '';
   const linkHtml = link ? `<p><a class="more-info-link" href="${link}" target="_blank" rel="noopener">${t('moreInfo')}</a></p>` : '';
-  return `<div class="card"><h3>${title} <span class="tag" data-tag-key="${meta.type}">${tag}</span></h3><section>${mediaHtml}${addressHtml}${phoneHtml}${descHtml}${linkHtml}</section></div>`;
+  return `<div class="card"><h3>${title} <span class="tag" data-tag-key="${tagKey}">${tag}</span></h3><section>${mediaHtml}${addressHtml}${phoneHtml}${descHtml}${linkHtml}</section></div>`;
 }
 function applyLanguage() {
   document.body.classList.toggle('simplified-chinese-font', state.lang === 'zh-Hans');
@@ -417,6 +542,21 @@ function applyLanguage() {
   document.getElementById('legendVideo').textContent = t('legendVideo');
   document.getElementById('legendCurrent').textContent = t('legendCurrent');
   document.getElementById('langToggle').value = state.lang;
+  document.getElementById('addLandmarkBtn').textContent = t('addLandmark');
+  document.getElementById('landmarkFormTitle').textContent = t('landmarkFormTitle');
+  document.getElementById('landmarkLocationText').textContent = `${t('landmarkLocation')}: ${state.selectedLandmarkLocation ? `${state.selectedLandmarkLocation.lat.toFixed(6)}, ${state.selectedLandmarkLocation.lng.toFixed(6)}` : ''}`;
+  document.getElementById('landmarkTitleLabel').textContent = t('landmarkTitle');
+  document.getElementById('landmarkTagLabel').textContent = t('landmarkTag');
+  document.getElementById('landmarkAddressLabel').textContent = t('landmarkAddress');
+  document.getElementById('landmarkPhoneLabel').textContent = t('landmarkPhone');
+  document.getElementById('landmarkImageLabel').textContent = t('landmarkImage');
+  document.getElementById('landmarkLinkLabel').textContent = t('landmarkLink');
+  document.getElementById('landmarkDescriptionLabel').textContent = t('landmarkDescription');
+  document.getElementById('landmarkCancel').textContent = t('landmarkCancel');
+  document.getElementById('landmarkSubmit').textContent = t('landmarkSubmit');
+  if (state.addingLandmark) {
+    document.getElementById('landmarkPlacementStatus').textContent = t('placeLandmark');
+  }
   const result = document.getElementById('result');
   if (result && !result.dataset.hasLocation) {
     result.textContent = t('resultWaiting');
@@ -472,8 +612,62 @@ function icon(c){
   })
 }
 const icons={
-  school:icon('#60a5fa'),museum:icon('#fbbf24'),video:icon('#a855f7')
+  school:icon('#60a5fa'),museum:icon('#fbbf24'),video:icon('#a855f7'),landmark:icon('#10b981')
 };
+document.getElementById('addLandmarkBtn').addEventListener('click', () => {
+  state.addingLandmark = !state.addingLandmark;
+  document.getElementById('landmarkPlacementStatus').hidden = !state.addingLandmark;
+  if (state.addingLandmark) {
+    document.getElementById('landmarkPlacementStatus').textContent = t('placeLandmark');
+    document.getElementById('container').style.cursor = 'crosshair';
+  } else {
+    document.getElementById('container').style.cursor = '';
+  }
+});
+map.on('click', event => {
+  if (!state.addingLandmark) return;
+  state.addingLandmark = false;
+  state.selectedLandmarkLocation = event.latlng;
+  document.getElementById('landmarkPlacementStatus').hidden = true;
+  document.getElementById('container').style.cursor = '';
+  document.getElementById('landmarkFormStatus').textContent = '';
+  document.getElementById('landmarkForm').reset();
+  document.getElementById('landmarkLocationText').textContent = `${t('landmarkLocation')}: ${event.latlng.lat.toFixed(6)}, ${event.latlng.lng.toFixed(6)}`;
+  document.getElementById('landmarkDialog').showModal();
+});
+document.getElementById('landmarkCancel').addEventListener('click', () => {
+  document.getElementById('landmarkDialog').close();
+});
+document.getElementById('landmarkForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const submitButton = document.getElementById('landmarkSubmit');
+  const formStatus = document.getElementById('landmarkFormStatus');
+  const fields = new FormData(form);
+  submitButton.disabled = true;
+  submitButton.textContent = t('landmarkSubmitting');
+  formStatus.textContent = '';
+  try {
+    await window.HoloMapAPI.submitLandmark({
+      title: fields.get('title'),
+      tag: fields.get('tag'),
+      address: fields.get('address'),
+      phone: fields.get('phone'),
+      image_url: fields.get('image_url'),
+      link: fields.get('link'),
+      description: fields.get('description'),
+      lat: state.selectedLandmarkLocation.lat,
+      lng: state.selectedLandmarkLocation.lng
+    });
+    document.getElementById('landmarkDialog').close();
+    alert(t('landmarkSubmitted'));
+  } catch (error) {
+    formStatus.textContent = error.message;
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = t('landmarkSubmit');
+  }
+});
 function add(lat,lng,meta,type){
   const marker = L.marker([lat,lng],{
     icon:icons[type]
@@ -531,6 +725,25 @@ async function loadVideos(){
   }
   catch(e){
     console.error(e)
+  }
+}
+async function loadLandmarks(){
+  try {
+    const landmarks = await window.HoloMapAPI.fetchApprovedLandmarks();
+    landmarks.forEach(landmark => {
+      add(Number(landmark.lat), Number(landmark.lng), {
+        type: 'user-landmark',
+        title: landmark.title,
+        tag: landmark.tag,
+        image: landmark.image_url,
+        address: landmark.address,
+        phone: landmark.phone,
+        link: landmark.link,
+        description: landmark.description
+      }, 'landmark');
+    });
+  } catch (error) {
+    console.error('Failed to load approved landmarks:', error);
   }
 }
 
@@ -683,6 +896,7 @@ document.getElementById('locateBtn').onclick=locate;
 applyLanguage();
 locate();
 loadVideos();
+loadLandmarks();
     </script>
   </body>
 </html>

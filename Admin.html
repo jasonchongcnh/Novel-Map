@@ -128,14 +128,22 @@
         </p>
         <div id="grid" class="grid">
         </div>
+        <h1>
+          待審批地標
+        </h1>
+        <p id="landmarkStatus">
+          載入中...
+        </p>
+        <div id="landmarkGrid" class="grid">
+        </div>
       </section>
     </main>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
     </script>
-    <script src="config.js">
+    <script src="config.js?v=map-landmarks-1">
     </script>
     <script>
-    const login=document.getElementById('login'),review=document.getElementById('review'),grid=document.getElementById('grid'),status=document.getElementById('status');
+    const login=document.getElementById('login'),review=document.getElementById('review'),grid=document.getElementById('grid'),status=document.getElementById('status'),landmarkGrid=document.getElementById('landmarkGrid'),landmarkStatus=document.getElementById('landmarkStatus');
     function render(videos){
       grid.innerHTML='';
       status.textContent=`共 ${videos.length} 條待審批`;
@@ -161,6 +169,51 @@
         grid.appendChild(c)
       })
     }
+    function renderLandmarks(landmarks){
+      landmarkGrid.innerHTML='';
+      landmarkStatus.textContent=`共 ${landmarks.length} 個待審批地標`;
+      landmarks.forEach(landmark=>{
+        const card=document.createElement('article');
+        card.className='card';
+        const content=document.createElement('div');
+        content.className='content';
+        const title=document.createElement('h3');
+        title.textContent=landmark.title;
+        const details=document.createElement('p');
+        details.textContent=[
+          `標籤: ${landmark.tag}`,
+          landmark.address,
+          landmark.phone,
+          landmark.description,
+          landmark.image_url,
+          landmark.link,
+          `${Number(landmark.lat).toFixed(6)}, ${Number(landmark.lng).toFixed(6)}`
+        ].filter(Boolean).join(' / ');
+        const actions=document.createElement('div');
+        actions.className='actions';
+        content.append(title,details,actions);
+        card.appendChild(content);
+        ['approved','rejected'].forEach(nextStatus=>{
+          const button=document.createElement('button');
+          button.textContent=nextStatus==='approved'?'通過':'拒絕';
+          if(nextStatus==='rejected') button.className='reject';
+          button.onclick=async()=>{
+            button.disabled=true;
+            try{
+              await window.HoloMapAPI.updateLandmarkStatus(landmark.id,nextStatus);
+              card.remove();
+              landmarkStatus.textContent=`${Math.max(0,landmarkGrid.children.length)} 個待審批地標`;
+            }
+            catch(error){
+              alert(error.message);
+              button.disabled=false;
+            }
+          };
+          actions.appendChild(button);
+        });
+        landmarkGrid.appendChild(card);
+      });
+    }
     async function load(){
       try{
         const v=await window.HoloMapAPI.fetchPendingVideos();
@@ -168,6 +221,13 @@
       }
       catch(e){
         status.textContent='載入失敗: '+e.message
+      }
+      try{
+        const landmarks=await window.HoloMapAPI.fetchPendingLandmarks();
+        renderLandmarks(landmarks);
+      }
+      catch(e){
+        landmarkStatus.textContent='載入失敗: '+e.message;
       }
     }
     document.getElementById('form').onsubmit=async e=>{
