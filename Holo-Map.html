@@ -167,6 +167,12 @@
       font-size:11px;
       color:#0284c7
     }
+    /* Styles for like button and phone row */
+    .info-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+    .phone{font-weight:600;color:#0f172a}
+    .like-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:14px}
+    .like-btn.liked{background:#ffe4e6;border-color:#fda4af}
+    .like-count{font-weight:600}
     @media(max-width:600px){
       .panel{
         left:12px;
@@ -343,7 +349,14 @@ const icons={
   school:icon('#60a5fa'),museum:icon('#fbbf24'),video:icon('#a855f7')
 };
 function card(title,tag,image,address,phone,link,video,description){
-  return `<div class="card"><h3>${title} <span class="tag">${tag}</span></h3><section>${video?`<video controls src="${video}"></video>`:image?`<img src="${image}" alt="${title}">`:''}${description?`<p>${description}</p>`:''}${address?`<p>📍 ${address}</p>`:''}${phone?`<p>☎ ${phone}</p>`:''}${link?`<a href="${link}" target="_blank">更多資訊 →</a>`:''}</section></div>`
+  // Build phone + like button row; like button uses a data-like-key based on title and tag
+  const likeKey = encodeURIComponent((title||'') + '|' + (tag||''));
+  const mediaHtml = video?`<video controls src="${video}"></video>`:image?`<img src="${image}" alt="${title}">`:'';
+  const addressHtml = address?`<div class="info-row"><div>${address}</div></div>`:'';
+  const phoneHtml = phone?`<div class="info-row"><div>電話: <span class="phone">${phone}</span></div><button class="like-btn" data-like-key="${likeKey}" type="button" aria-label="like">👍 <span class="like-count">0</span></button></div>`:'';
+  const descHtml = description?`<p>${description}</p>`:'';
+  const linkHtml = link?`<p><a href="${link}" target="_blank" rel="noopener">更多資訊</a></p>`:'';
+  return `<div class="card"><h3>${title} <span class="tag">${tag}</span></h3><section>${mediaHtml}${addressHtml}${phoneHtml}${descHtml}${linkHtml}</section></div>`;
 }
 function add(lat,lng,content,type){
   return L.marker([lat,lng],{
@@ -357,13 +370,46 @@ async function loadVideos(){
     const videos=await window.HoloMapAPI.fetchVideos();
     (videos||[]).forEach(v=>{
       if(v.lat==null||v.lng==null)return;
-      add(Number(v.lat),Number(v.lng),card(v.title||'全息定位影片','影音地標',null,`經緯度: ${Number(v.lat).toFixed(4)}, ${Number(v.lng).toFixed(4)}`,null,null,v.video_url,v.description||''),'video')
+      add(Number(v.lat),Number(v.lng),card(v.title||'全息定位影片','影音地標',null,`經緯度: ${Number(v.lat).toFixed(4)}, ${Number(v.lng).toFixed(4)}`,null,null,v.video_url,v.description||''),'video');
     })
   }
   catch(e){
     console.error(e)
   }
 }
+
+// Like handling (localStorage-backed). Minimal, only affects like button next to phone number.
+function likesKeyPrefix(){ return 'holomap:likes:' }
+function getLikes(key){
+  try{ return Number(localStorage.getItem(likesKeyPrefix()+key) || 0) }catch(e){return 0}
+}
+function setLike(key){
+  try{
+    const current = getLikes(key);
+    const next = current + 1;
+    localStorage.setItem(likesKeyPrefix()+key, String(next));
+    return next;
+  }catch(e){return 0}
+}
+
+// When any popup opens, wire up like buttons (and set initial counts)
+map.on('popupopen', function(e){
+  const popupEl = e.popup.getElement();
+  if(!popupEl) return;
+  popupEl.querySelectorAll('.like-btn').forEach(btn=>{
+    const key = btn.dataset.likeKey;
+    const countSpan = btn.querySelector('.like-count');
+    if(countSpan) countSpan.textContent = String(getLikes(key));
+    // Prevent attaching multiple handlers
+    btn.onclick = function(ev){
+      ev.preventDefault();
+      const newCount = setLike(key);
+      if(countSpan) countSpan.textContent = String(newCount);
+      btn.classList.add('liked');
+    }
+  })
+});
+
 let userMarker=null,userCircle=null;
 function showLocation(lat,lng,accuracy){
   const pos=[lat,lng];
