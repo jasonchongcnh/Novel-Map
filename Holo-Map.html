@@ -335,6 +335,15 @@ const translations = {
     tagVideo: 'Marcador de vídeo'
   }
 };
+const requestedLanguage = new URLSearchParams(location.search).get('lang');
+const state = { lang: translations[requestedLanguage] ? requestedLanguage : 'zh-Hant' };
+const placeTitleTranslations = {
+  '澳門慈幼中學': { 'zh-Hant': '澳門慈幼中學', 'zh-Hans': '澳门慈幼中学', en: 'Macau Immaculate Conception College', pt: 'Colégio Imaculado Coração de Maria' },
+  '澳門科學館': { 'zh-Hant': '澳門科學館', 'zh-Hans': '澳门科学馆', en: 'Macau Science Center', pt: 'Centro de Ciência de Macau' },
+  '學校': { 'zh-Hant': '學校', 'zh-Hans': '学校', en: 'School', pt: 'Escola' },
+  '博物館': { 'zh-Hant': '博物館', 'zh-Hans': '博物馆', en: 'Museum', pt: 'Museu' }
+};
+function t(k) { return translations[state.lang][k]; }
 const placeText = {
   'zh-Hant': {
     school: { title: '澳門慈幼中學', address: '澳門風順堂街十六號', tag: '學校', description: '澳門慈幼中學' },
@@ -357,9 +366,6 @@ const placeText = {
     video: { title: 'Vídeo de localização holográfica', tag: 'Marcador de vídeo', description: 'Vídeo de localização holográfica' }
   }
 };
-const requestedLanguage = new URLSearchParams(location.search).get('lang');
-const state = { lang: translations[requestedLanguage] ? requestedLanguage : 'zh-Hant' };
-function t(k) { return translations[state.lang][k]; }
 function tagLabel(key){
   if(!key) return '';
   const map = { school: 'tagSchool', museum: 'tagMuseum', video: 'tagVideo' };
@@ -368,7 +374,15 @@ function tagLabel(key){
 }
 function getPlaceMeta(type){
   const source = placeText[state.lang] && placeText[state.lang][type] ? placeText[state.lang][type] : placeText['zh-Hant'][type];
-  return source || { title: '', address: '', tag: '', description: '' };
+  if (!source) return { title: '', address: '', tag: '', description: '' };
+  const canonical = placeText['zh-Hant'][type];
+  const titleTranslation = canonical && placeTitleTranslations[canonical.title];
+  const tagTranslation = canonical && placeTitleTranslations[canonical.tag];
+  return {
+    ...source,
+    title: titleTranslation ? titleTranslation[state.lang] : source.title,
+    tag: tagTranslation ? tagTranslation[state.lang] : source.tag
+  };
 }
 function buildCardHtml(meta){
   const title = meta.title || '';
@@ -410,6 +424,10 @@ function applyLanguage() {
 
   map.eachLayer(layer => {
     if (layer && layer._cardMeta) {
+      if (layer._cardMeta.type === 'school' || layer._cardMeta.type === 'museum') {
+        const place = getPlaceMeta(layer._cardMeta.type);
+        Object.assign(layer._cardMeta, place);
+      }
       layer.setPopupContent(buildCardHtml(layer._cardMeta));
     }
   });
