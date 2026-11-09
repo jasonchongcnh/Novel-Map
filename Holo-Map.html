@@ -603,7 +603,7 @@ document.getElementById('languageLabel').addEventListener('click', () => {
 });
 const center=[22.186945,113.541765], map=L.map('container', { zoomControl: false }).setView(center,16);
 L.control.zoom({ position: 'bottomleft' }).addTo(map);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
   maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
 function icon(c){

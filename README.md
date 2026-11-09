@@ -9,6 +9,20 @@ Novel-Map is a static holographic map demo for Macau. Visitors can view approved
 - `Upload-status.html` - Check an upload's current status using its upload ID.
 - `Admin.html` - Admin review page for approving or rejecting pending videos and landmarks.
 
+## Local Preview
+
+From the repository folder, run:
+
+```powershell
+python -m http.server 8000 --bind 127.0.0.1
+```
+
+Open http://127.0.0.1:8000/Holo-Map.html in your browser. Stop the server with Ctrl+C.
+
+Serve the page over HTTP instead of double-clicking the HTML file (`file://`). OpenStreetMap requires a valid HTTP Referer for web tile requests; opening a local file can cause tile access errors. Map tiles and cloud features still require an internet connection.
+
+If a 403 persists, check the failed request URL in the browser's Network tab. A 403 for the HTML document comes from the local server; a 403 for a tile or API request comes from that external service.
+
 ## Upload Status Setup
 
 Run `supabase-upload-status.sql` in the Supabase SQL Editor after the existing manual approval setup. It adds the status lookup function without making pending or rejected video records publicly readable.
