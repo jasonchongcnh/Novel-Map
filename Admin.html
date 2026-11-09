@@ -45,6 +45,29 @@
       border:1px solid #cbd5e1;
       border-radius:8px
     }
+    textarea{
+      display:block;
+      width:100%;
+      box-sizing:border-box;
+      min-height:90px;
+      padding:11px;
+      margin:8px 0 14px;
+      border:1px solid #cbd5e1;
+      border-radius:8px;
+      font:inherit
+    }
+    label{display:block;font-weight:600}
+    .landmark-dialog{
+      width:min(520px,calc(100vw - 40px));
+      max-height:calc(100vh - 40px);
+      overflow-y:auto;
+      border:1px solid #cbd5e1;
+      border-radius:14px;
+      padding:20px
+    }
+    .landmark-dialog::backdrop{background:#0f172a88}
+    .landmark-dialog-actions{display:flex;justify-content:flex-end;gap:8px}
+    .landmark-dialog .cancel{background:#64748b}
     .panel{
       max-width:420px;
       margin:40px auto
@@ -136,14 +159,51 @@
         </p>
         <div id="landmarkGrid" class="grid">
         </div>
+        <h1>
+          已審核地標
+        </h1>
+        <p id="approvedLandmarkStatus">
+          載入中...
+        </p>
+        <div id="approvedLandmarkGrid" class="grid">
+        </div>
       </section>
     </main>
+    <dialog class="landmark-dialog" id="landmarkEditDialog" aria-labelledby="landmarkEditTitle">
+      <form id="landmarkEditForm">
+        <h2 id="landmarkEditTitle">編輯地標資訊</h2>
+        <label for="editLandmarkTitle">名稱</label>
+        <input id="editLandmarkTitle" name="title" maxlength="100" required>
+        <label for="editLandmarkTag">標籤</label>
+        <input id="editLandmarkTag" name="tag" maxlength="40" required>
+        <label for="editLandmarkAddress">地址</label>
+        <input id="editLandmarkAddress" name="address" maxlength="200">
+        <label for="editLandmarkPhone">電話</label>
+        <input id="editLandmarkPhone" name="phone" maxlength="40" type="tel">
+        <label for="editLandmarkImage">圖片網址</label>
+        <input id="editLandmarkImage" name="image_url" maxlength="2048" type="url">
+        <label for="editLandmarkLink">網站連結</label>
+        <input id="editLandmarkLink" name="link" maxlength="2048" type="url">
+        <label for="editLandmarkDescription">描述</label>
+        <textarea id="editLandmarkDescription" name="description" maxlength="1000"></textarea>
+        <label for="editLandmarkLat">緯度</label>
+        <input id="editLandmarkLat" name="lat" type="number" step="any" min="-90" max="90" required>
+        <label for="editLandmarkLng">經度</label>
+        <input id="editLandmarkLng" name="lng" type="number" step="any" min="-180" max="180" required>
+        <p id="landmarkEditStatus" role="status"></p>
+        <div class="landmark-dialog-actions">
+          <button class="cancel" id="cancelLandmarkEdit" type="button">取消</button>
+          <button id="saveLandmarkEdit" type="submit">儲存修改</button>
+        </div>
+      </form>
+    </dialog>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
     </script>
-    <script src="config.js?v=map-landmarks-1">
+    <script src="config.js?v=landmark-edit-1">
     </script>
     <script>
-    const login=document.getElementById('login'),review=document.getElementById('review'),grid=document.getElementById('grid'),status=document.getElementById('status'),landmarkGrid=document.getElementById('landmarkGrid'),landmarkStatus=document.getElementById('landmarkStatus');
+    const login=document.getElementById('login'),review=document.getElementById('review'),grid=document.getElementById('grid'),status=document.getElementById('status'),landmarkGrid=document.getElementById('landmarkGrid'),landmarkStatus=document.getElementById('landmarkStatus'),approvedLandmarkGrid=document.getElementById('approvedLandmarkGrid'),approvedLandmarkStatus=document.getElementById('approvedLandmarkStatus');
+    let editingLandmarkId=null;
     function render(videos){
       grid.innerHTML='';
       status.textContent=`共 ${videos.length} 條待審批`;
@@ -214,6 +274,92 @@
         landmarkGrid.appendChild(card);
       });
     }
+    function renderApprovedLandmarks(landmarks){
+      approvedLandmarkGrid.innerHTML='';
+      approvedLandmarkStatus.textContent=`共 ${landmarks.length} 個已審核地標`;
+      landmarks.forEach(landmark=>{
+        const card=document.createElement('article');
+        card.className='card';
+        const content=document.createElement('div');
+        content.className='content';
+        const title=document.createElement('h3');
+        title.textContent=landmark.title;
+        const details=document.createElement('p');
+        details.textContent=[
+          `標籤: ${landmark.tag}`,
+          landmark.address,
+          landmark.phone,
+          landmark.description,
+          landmark.image_url,
+          landmark.link,
+          `${Number(landmark.lat).toFixed(6)}, ${Number(landmark.lng).toFixed(6)}`
+        ].filter(Boolean).join(' / ');
+        const actions=document.createElement('div');
+        actions.className='actions';
+        const editButton=document.createElement('button');
+        editButton.textContent='編輯';
+        editButton.onclick=()=>openLandmarkEditor(landmark);
+        actions.appendChild(editButton);
+        content.append(title,details,actions);
+        card.appendChild(content);
+        approvedLandmarkGrid.appendChild(card);
+      });
+    }
+    function openLandmarkEditor(landmark){
+      editingLandmarkId=landmark.id;
+      const form=document.getElementById('landmarkEditForm');
+      form.elements.title.value=landmark.title||'';
+      form.elements.tag.value=landmark.tag||'';
+      form.elements.address.value=landmark.address||'';
+      form.elements.phone.value=landmark.phone||'';
+      form.elements.image_url.value=landmark.image_url||'';
+      form.elements.link.value=landmark.link||'';
+      form.elements.description.value=landmark.description||'';
+      form.elements.lat.value=landmark.lat;
+      form.elements.lng.value=landmark.lng;
+      document.getElementById('landmarkEditStatus').textContent='';
+      document.getElementById('landmarkEditDialog').showModal();
+    }
+    document.getElementById('cancelLandmarkEdit').onclick=()=>document.getElementById('landmarkEditDialog').close();
+    document.getElementById('landmarkEditForm').onsubmit=async event=>{
+      event.preventDefault();
+      const form=event.currentTarget;
+      const saveButton=document.getElementById('saveLandmarkEdit');
+      const formStatus=document.getElementById('landmarkEditStatus');
+      const fields=new FormData(form);
+      saveButton.disabled=true;
+      formStatus.textContent='';
+      try{
+        await window.HoloMapAPI.updateApprovedLandmark(editingLandmarkId,{
+          title:fields.get('title'),
+          tag:fields.get('tag'),
+          address:fields.get('address'),
+          phone:fields.get('phone'),
+          image_url:fields.get('image_url'),
+          link:fields.get('link'),
+          description:fields.get('description'),
+          lat:fields.get('lat'),
+          lng:fields.get('lng')
+        });
+        document.getElementById('landmarkEditDialog').close();
+        await loadApprovedLandmarks();
+      }
+      catch(error){
+        formStatus.textContent='儲存失敗: '+error.message;
+      }
+      finally{
+        saveButton.disabled=false;
+      }
+    };
+    async function loadApprovedLandmarks(){
+      approvedLandmarkStatus.textContent='載入中...';
+      try{
+        renderApprovedLandmarks(await window.HoloMapAPI.fetchApprovedLandmarks());
+      }
+      catch(error){
+        approvedLandmarkStatus.textContent='載入失敗: '+error.message;
+      }
+    }
     async function load(){
       try{
         const v=await window.HoloMapAPI.fetchPendingVideos();
@@ -229,6 +375,7 @@
       catch(e){
         landmarkStatus.textContent='載入失敗: '+e.message;
       }
+      await loadApprovedLandmarks();
     }
     document.getElementById('form').onsubmit=async e=>{
       e.preventDefault();

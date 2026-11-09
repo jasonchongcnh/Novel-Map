@@ -79,6 +79,34 @@ function createUploadId() {
     return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+function normalizeLandmarkInput({ title, tag, address, phone, image_url, link, description, lat, lng }) {
+    if (lat == null || lng == null || String(lat).trim() === "" || String(lng).trim() === "") {
+        throw new Error("A map location is required.");
+    }
+
+    const record = {
+        title: String(title || "").trim(),
+        tag: String(tag || "").trim(),
+        address: String(address || "").trim(),
+        phone: String(phone || "").trim(),
+        image_url: String(image_url || "").trim(),
+        link: String(link || "").trim(),
+        description: String(description || "").trim(),
+        lat: Number(lat),
+        lng: Number(lng)
+    };
+    const isValidUrl = value => !value || /^https?:\/\/[^\/?#\s]+(?:[\/?#][^\s]*)?$/i.test(value);
+    if (!record.title || record.title.length > 100 || !record.tag || record.tag.length > 40 ||
+        record.address.length > 200 || record.phone.length > 40 || record.image_url.length > 2048 ||
+        record.link.length > 2048 || !isValidUrl(record.image_url) ||
+        record.description.length > 1000 || !Number.isFinite(record.lat) || record.lat < -90 || record.lat > 90 ||
+        !Number.isFinite(record.lng) || record.lng < -180 || record.lng > 180 ||
+        !isValidUrl(record.link)) {
+        throw new Error("Invalid landmark details.");
+    }
+    return record;
+}
+
 // Global API Helper
 window.HoloMapAPI = {
     isCloudEnabled: () => !!supabaseClient,
@@ -242,35 +270,11 @@ window.HoloMapAPI = {
         if (!supabaseClient) {
             throw new Error("Supabase is not configured.");
         }
-        if (lat == null || lng == null || String(lat).trim() === "" || String(lng).trim() === "") {
-            throw new Error("A map location is required.");
-        }
-
-        const record = {
-            title: String(title || "").trim(),
-            tag: String(tag || "").trim(),
-            address: String(address || "").trim(),
-            phone: String(phone || "").trim(),
-            image_url: String(image_url || "").trim(),
-            link: String(link || "").trim(),
-            description: String(description || "").trim(),
-            lat: Number(lat),
-            lng: Number(lng),
-            status: "pending"
-        };
-        const isValidUrl = value => !value || /^https?:\/\/[^\/?#\s]+(?:[\/?#][^\s]*)?$/i.test(value);
-        if (!record.title || record.title.length > 100 || !record.tag || record.tag.length > 40 ||
-            record.address.length > 200 || record.phone.length > 40 || record.image_url.length > 2048 ||
-            record.link.length > 2048 || !isValidUrl(record.image_url) ||
-            record.description.length > 1000 || !Number.isFinite(record.lat) || record.lat < -90 || record.lat > 90 ||
-            !Number.isFinite(record.lng) || record.lng < -180 || record.lng > 180 ||
-            !isValidUrl(record.link)) {
-            throw new Error("Invalid landmark details.");
-        }
+        const record = normalizeLandmarkInput({ title, tag, address, phone, image_url, link, description, lat, lng });
 
         const { error } = await supabaseClient
             .from('map_landmarks')
-            .insert([record]);
+            .insert([{ ...record, status: "pending" }]);
         if (error) {
             throw new Error("Landmark submission failed: " + error.message);
         }
@@ -290,6 +294,24 @@ window.HoloMapAPI = {
             throw new Error("Failed to load landmarks: " + error.message);
         }
         return data || [];
+    },
+
+    updateApprovedLandmark: async function(id, { title, tag, address, phone, image_url, link, description, lat, lng }) {
+        if (!supabaseClient) {
+            throw new Error("Supabase is not configured.");
+        }
+        const record = normalizeLandmarkInput({ title, tag, address, phone, image_url, link, description, lat, lng });
+        const { data, error } = await supabaseClient
+            .from('map_landmarks')
+            .update(record)
+            .eq('id', id)
+            .eq('status', 'approved')
+            .select('id,title,tag,address,phone,image_url,link,description,lat,lng,created_at')
+            .single();
+        if (error) {
+            throw new Error("Landmark update failed: " + error.message);
+        }
+        return data;
     },
 
     getCurrentUser: async function() {
