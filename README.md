@@ -29,7 +29,7 @@ Run `supabase-upload-status.sql` in the Supabase SQL Editor after the existing m
 
 ## User-Created Map Landmarks
 
-Run `supabase-map-landmarks.sql` in the Supabase SQL Editor after `supabase-manual-approval.sql`. Visitors can submit a landmark by choosing a map location and filling in its card details. Submitted landmarks remain hidden until an admin approves them in `Admin.html`. Admins can edit approved landmarks there without changing their approval status.
+Run `supabase-map-landmarks.sql` in the Supabase SQL Editor after `supabase-manual-approval.sql`. Visitors can submit a landmark by choosing a map location and filling in its card details. Submitted landmarks remain hidden until an admin approves them in `Admin.html`. Admins can edit approved landmarks and videos there without changing their approval status.
 
 ## Review Workflow
 

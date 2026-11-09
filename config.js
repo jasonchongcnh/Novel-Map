@@ -364,6 +364,52 @@ window.HoloMapAPI = {
         return data || [];
     },
 
+    fetchApprovedVideosForAdmin: async function() {
+        if (!supabaseClient) {
+            throw new Error("Supabase is not configured.");
+        }
+        const { data, error } = await supabaseClient
+            .from('public_map_videos')
+            .select('id,title,description,video_url,lat,lng,created_at')
+            .eq('status', 'approved')
+            .order('created_at', { ascending: false });
+        if (error) {
+            throw new Error(error.message);
+        }
+        return data || [];
+    },
+
+    updateApprovedVideo: async function(id, { title, description, video_url, lat, lng }) {
+        if (!supabaseClient) {
+            throw new Error("Supabase is not configured.");
+        }
+        const record = {
+            title: String(title || "").trim(),
+            description: String(description || "").trim(),
+            video_url: String(video_url || "").trim(),
+            lat: Number(lat),
+            lng: Number(lng)
+        };
+        const isValidUrl = value => /^https?:\/\/[^\/?#\s]+(?:[\/?#][^\s]*)?$/i.test(value);
+        if (!record.title || record.title.length > 200 || record.description.length > 2000 ||
+            record.video_url.length > 2048 || !isValidUrl(record.video_url) ||
+            !Number.isFinite(record.lat) || record.lat < -90 || record.lat > 90 ||
+            !Number.isFinite(record.lng) || record.lng < -180 || record.lng > 180) {
+            throw new Error("Invalid video details.");
+        }
+        const { data, error } = await supabaseClient
+            .from('public_map_videos')
+            .update(record)
+            .eq('id', id)
+            .eq('status', 'approved')
+            .select('id,title,description,video_url,lat,lng,created_at')
+            .single();
+        if (error) {
+            throw new Error("Video update failed: " + error.message);
+        }
+        return data;
+    },
+
     fetchPendingLandmarks: async function() {
         if (!supabaseClient) {
             throw new Error("Supabase is not configured.");
