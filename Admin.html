@@ -152,6 +152,14 @@
         <div id="grid" class="grid">
         </div>
         <h1>
+          已審核影片
+        </h1>
+        <p id="approvedVideoStatus">
+          載入中...
+        </p>
+        <div id="approvedVideoGrid" class="grid">
+        </div>
+        <h1>
           待審批地標
         </h1>
         <p id="landmarkStatus">
@@ -169,6 +177,26 @@
         </div>
       </section>
     </main>
+    <dialog class="landmark-dialog" id="videoEditDialog" aria-labelledby="videoEditTitle">
+      <form id="videoEditForm">
+        <h2 id="videoEditTitle">編輯影片資訊</h2>
+        <label for="editVideoTitle">名稱</label>
+        <input id="editVideoTitle" name="title" maxlength="200" required>
+        <label for="editVideoDescription">描述</label>
+        <textarea id="editVideoDescription" name="description" maxlength="2000"></textarea>
+        <label for="editVideoUrl">影片網址</label>
+        <input id="editVideoUrl" name="video_url" maxlength="2048" type="url" required>
+        <label for="editVideoLat">緯度</label>
+        <input id="editVideoLat" name="lat" type="number" step="any" min="-90" max="90" required>
+        <label for="editVideoLng">經度</label>
+        <input id="editVideoLng" name="lng" type="number" step="any" min="-180" max="180" required>
+        <p id="videoEditStatus" role="status"></p>
+        <div class="landmark-dialog-actions">
+          <button class="cancel" id="cancelVideoEdit" type="button">取消</button>
+          <button id="saveVideoEdit" type="submit">儲存修改</button>
+        </div>
+      </form>
+    </dialog>
     <dialog class="landmark-dialog" id="landmarkEditDialog" aria-labelledby="landmarkEditTitle">
       <form id="landmarkEditForm">
         <h2 id="landmarkEditTitle">編輯地標資訊</h2>
@@ -199,11 +227,11 @@
     </dialog>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
     </script>
-    <script src="config.js?v=landmark-edit-1">
+    <script src="config.js?v=approved-video-edit-1">
     </script>
     <script>
-    const login=document.getElementById('login'),review=document.getElementById('review'),grid=document.getElementById('grid'),status=document.getElementById('status'),landmarkGrid=document.getElementById('landmarkGrid'),landmarkStatus=document.getElementById('landmarkStatus'),approvedLandmarkGrid=document.getElementById('approvedLandmarkGrid'),approvedLandmarkStatus=document.getElementById('approvedLandmarkStatus');
-    let editingLandmarkId=null;
+    const login=document.getElementById('login'),review=document.getElementById('review'),grid=document.getElementById('grid'),status=document.getElementById('status'),approvedVideoGrid=document.getElementById('approvedVideoGrid'),approvedVideoStatus=document.getElementById('approvedVideoStatus'),landmarkGrid=document.getElementById('landmarkGrid'),landmarkStatus=document.getElementById('landmarkStatus'),approvedLandmarkGrid=document.getElementById('approvedLandmarkGrid'),approvedLandmarkStatus=document.getElementById('approvedLandmarkStatus');
+    let editingLandmarkId=null,editingVideoId=null;
     function render(videos){
       grid.innerHTML='';
       status.textContent=`共 ${videos.length} 條待審批`;
@@ -228,6 +256,83 @@
         });
         grid.appendChild(c)
       })
+    }
+    function renderApprovedVideos(videos){
+      approvedVideoGrid.innerHTML='';
+      approvedVideoStatus.textContent=`共 ${videos.length} 條已審核影片`;
+      videos.forEach(video=>{
+        const card=document.createElement('article');
+        card.className='card';
+        const preview=document.createElement('video');
+        preview.controls=true;
+        preview.preload='metadata';
+        preview.src=video.video_url;
+        const content=document.createElement('div');
+        content.className='content';
+        const title=document.createElement('h3');
+        title.textContent=video.title||'全息定位影片';
+        const details=document.createElement('p');
+        details.textContent=[
+          video.description,
+          `${Number(video.lat).toFixed(6)}, ${Number(video.lng).toFixed(6)}`
+        ].filter(Boolean).join(' / ');
+        const actions=document.createElement('div');
+        actions.className='actions';
+        const editButton=document.createElement('button');
+        editButton.textContent='編輯';
+        editButton.onclick=()=>openVideoEditor(video);
+        actions.appendChild(editButton);
+        content.append(title,details,actions);
+        card.append(preview,content);
+        approvedVideoGrid.appendChild(card);
+      });
+    }
+    function openVideoEditor(video){
+      editingVideoId=video.id;
+      const form=document.getElementById('videoEditForm');
+      form.elements.title.value=video.title||'';
+      form.elements.description.value=video.description||'';
+      form.elements.video_url.value=video.video_url||'';
+      form.elements.lat.value=video.lat;
+      form.elements.lng.value=video.lng;
+      document.getElementById('videoEditStatus').textContent='';
+      document.getElementById('videoEditDialog').showModal();
+    }
+    document.getElementById('cancelVideoEdit').onclick=()=>document.getElementById('videoEditDialog').close();
+    document.getElementById('videoEditForm').onsubmit=async event=>{
+      event.preventDefault();
+      const form=event.currentTarget;
+      const saveButton=document.getElementById('saveVideoEdit');
+      const formStatus=document.getElementById('videoEditStatus');
+      const fields=new FormData(form);
+      saveButton.disabled=true;
+      formStatus.textContent='';
+      try{
+        await window.HoloMapAPI.updateApprovedVideo(editingVideoId,{
+          title:fields.get('title'),
+          description:fields.get('description'),
+          video_url:fields.get('video_url'),
+          lat:fields.get('lat'),
+          lng:fields.get('lng')
+        });
+        document.getElementById('videoEditDialog').close();
+        await loadApprovedVideos();
+      }
+      catch(error){
+        formStatus.textContent='儲存失敗: '+error.message;
+      }
+      finally{
+        saveButton.disabled=false;
+      }
+    };
+    async function loadApprovedVideos(){
+      approvedVideoStatus.textContent='載入中...';
+      try{
+        renderApprovedVideos(await window.HoloMapAPI.fetchApprovedVideosForAdmin());
+      }
+      catch(error){
+        approvedVideoStatus.textContent='載入失敗: '+error.message;
+      }
     }
     function renderLandmarks(landmarks){
       landmarkGrid.innerHTML='';
@@ -368,6 +473,7 @@
       catch(e){
         status.textContent='載入失敗: '+e.message
       }
+      await loadApprovedVideos();
       try{
         const landmarks=await window.HoloMapAPI.fetchPendingLandmarks();
         renderLandmarks(landmarks);
