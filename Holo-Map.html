@@ -466,8 +466,8 @@ const placeTitleTranslations = {
 function t(k) { return translations[state.lang][k]; }
 const placeText = {
   'zh-Hant': {
-    school: { title: '澳門慈幼中學', address: '澳門風順堂街十六號', tag: '學校', description: '澳門慈幼中學' },
-    museum: { title: '澳門科學館', address: '澳門孫逸仙大馬路', tag: '博物館', description: '澳門科學館' },
+    school: { title: '澳門慈幼中學', address: '澳門風順堂街十六號', tag: '學校', description: '一所位於澳門的私立中小學' },
+    museum: { title: '澳門科學館', address: '澳門孫逸仙大馬路', tag: '博物館', description: '一所位於澳門的科普型博物館' },
     video: { title: '全息定位影片', tag: '影音地標', description: '全息定位影片' }
   },
   'zh-Hans': {
@@ -603,7 +603,7 @@ document.getElementById('languageLabel').addEventListener('click', () => {
 });
 const center=[22.186945,113.541765], map=L.map('container', { zoomControl: false }).setView(center,16);
 L.control.zoom({ position: 'bottomleft' }).addTo(map);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
   maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
 function icon(c){
